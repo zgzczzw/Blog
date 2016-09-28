@@ -19,6 +19,15 @@ categories: Android
 
 先说明一下，项目代码已上传至github，不想看长篇大论的也可以先去下代码，对照代码，哪里不懂点哪里。
 
+## Contents
+- [Contents](#Contents)
+- [Android中实现类似效果的几种方式](#Android中实现类似效果的几种方式)
+    - [用Ripple实现类似效果](#用Ripple实现类似效果)
+    - [用Paint画出类似效果](#用Paint画出类似效果)
+- [反编译知乎代码](#反编译知乎代码)
+- [知乎实现原理](#知乎实现原理)
+- [实现最终效果](#实现最终效果)
+
 代码在这
 
 [https://github.com/zgzczzw/ZHFollowButton](https://github.com/zgzczzw/ZHFollowButton)

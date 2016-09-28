@@ -11,6 +11,14 @@ categories: 服务端开发
 现在在学习后端框架，最后的目标是希望搭建一个基于spring mvc + mybatis + spring的框架，因为之前接触过SSH，所以想从SSH开始，慢慢演化，也巩固一下自己的知识。
 之前每次搭建SSH框架都要在网上查各种资料，而且我也发现各种资料基于的SSH版本都比较老，新版本就会遇到各种各样的问题，所以基于这次的搭建流程，写一下遇到的问题和解决方法。
 
+## Contents
+- [Contents](#Contents)
+- [基础需求](#基础需求)
+- [配置Struts框架](#配置Struts框架)
+- [搭建Hibernate框架](#搭建Hibernate框架)
+- [DAO设计模型](#dao)
+- [搭建Spring框架，整合Struts和Hibernate](#搭建Spring框架，整合Struts和Hibernate)
+
 ## 基础需求
 
 ### 下载 Eclipse J2EE版
@@ -832,19 +840,3 @@ HibernateSesseionFactory类。他们的工作已经交给Spring去做，已经�
 3. HIbernate框架管理数据库很强大，但是同样的问题，重量级。目前因为移动应用的兴起，请求并发量暴增的问题，Mybatis框架对于数据库管理更轻量级，更灵活。这两个框架说不上孰优孰劣，大家可以看下资料。
 
 所以在下一篇文章中，准备先用SpringMVC代替struts。敬请期待
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

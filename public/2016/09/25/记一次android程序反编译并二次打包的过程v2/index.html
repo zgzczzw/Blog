@@ -90,7 +90,7 @@
 前几天看到有一个问题在问Android端目前防止二次打包的方法有哪些？我想从攻击的角度来说这个问题。在分析过程中讲解每一步都有哪些防范手段。下面以一个市面上大公司的app为例，讲一下我是怎么绕过它的防范机制，修改代码（弹出一个提示框），并进行二次打包，重新签名，运行的。在写这篇文的过程中，我也遇到了一些问题，我在文章的最后进行了整理提问，希望这方面经验丰富的开发">
 <meta property="og:type" content="article">
 <meta property="og:title" content="记一次android程序反编译并二次打包的过程">
-<meta property="og:url" content="http://zwgeek.com/2016/09/25/记一次android程序反编译并二次打包的过程/index.html">
+<meta property="og:url" content="http://zwgeek.com/2016/09/25/记一次android程序反编译并二次打包的过程v2/index.html">
 <meta property="og:site_name" content="逍遥居">
 <meta property="og:description" content="在安全界有一句话叫不懂攻，焉知防。
 前几天看到有一个问题在问Android端目前防止二次打包的方法有哪些？我想从攻击的角度来说这个问题。在分析过程中讲解每一步都有哪些防范手段。下面以一个市面上大公司的app为例，讲一下我是怎么绕过它的防范机制，修改代码（弹出一个提示框），并进行二次打包，重新签名，运行的。在写这篇文的过程中，我也遇到了一些问题，我在文章的最后进行了整理提问，希望这方面经验丰富的开发">
@@ -126,7 +126,7 @@
 <meta property="og:image" content="http://img.blog.csdn.net/20160921161910031?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
 <meta property="og:image" content="http://img.blog.csdn.net/20160921161924110?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
 <meta property="og:image" content="http://img.blog.csdn.net/20160921161953186?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">
-<meta property="og:updated_time" content="2016-09-26T04:40:53.000Z">
+<meta property="og:updated_time" content="2016-09-28T10:34:00.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="记一次android程序反编译并二次打包的过程">
 <meta name="twitter:description" content="在安全界有一句话叫不懂攻，焉知防。
@@ -152,7 +152,7 @@
 
 
 
-  <link rel="canonical" href="http://zwgeek.com/2016/09/25/记一次android程序反编译并二次打包的过程/"/>
+  <link rel="canonical" href="http://zwgeek.com/2016/09/25/记一次android程序反编译并二次打包的过程v2/"/>
 
   <title> 记一次android程序反编译并二次打包的过程 | 逍遥居 </title>
 </head>
@@ -369,8 +369,8 @@
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2016/09/25/记一次android程序反编译并二次打包的过程/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/25/记一次android程序反编译并二次打包的过程/" itemprop="commentsCount"></span>
+                <a href="/2016/09/25/记一次android程序反编译并二次打包的过程v2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/09/25/记一次android程序反编译并二次打包的过程v2/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -380,7 +380,7 @@
 
           
           
-             <span id="/2016/09/25/记一次android程序反编译并二次打包的过程/" class="leancloud_visitors" data-flag-title="记一次android程序反编译并二次打包的过程">
+             <span id="/2016/09/25/记一次android程序反编译并二次打包的过程v2/" class="leancloud_visitors" data-flag-title="记一次android程序反编译并二次打包的过程">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -405,6 +405,14 @@
         <p>在安全界有一句话叫不懂攻，焉知防。</p>
 <p>前几天看到有一个问题在问Android端目前防止二次打包的方法有哪些？我想从攻击的角度来说这个问题。在分析过程中讲解每一步都有哪些防范手段。下面以一个市面上大公司的app为例，讲一下我是怎么绕过它的防范机制，修改代码（弹出一个提示框），并进行二次打包，重新签名，运行的。在写这篇文的过程中，我也遇到了一些问题，我在文章的最后进行了整理提问，希望这方面经验丰富的开发者可以一起交流。</p>
 <p>另外，绕过程序的防二次打包机制毕竟不是一件好事，搞不好做这个程序的程序员要背锅，所以文章中代码都是以图片形式给出，关键识别位置都打了马赛克，但是我想一些有心人还是可以看出这是什么程序，你看出来就看出来吧，就不要说出来了，好吗。</p>
+<h3 id="Contents"><a href="#Contents" class="headerlink" title="Contents"></a>Contents</h3><ul>
+<li><a href="#Contents">Contents</a></li>
+<li><a href="#用ApkTool反编译android程序">用ApkTool反编译android程序</a></li>
+<li><a href="#用dex2jar反编译出java源代码">用dex2jar反编译出java源代码</a></li>
+<li><a href="#用gui查看代码">用gui查看代码</a></li>
+<li><a href="#重新打包，签名，运行">重新打包，签名，运行</a></li>
+<li><a href="#绕过程序防二次打包机制">绕过程序防二次打包机制</a></li>
+</ul>
 <p>好，以下是正文</p>
 <p>工欲善其事，必先利其器。首先准备好工具：</p>
 <p>反编译工具</p>
@@ -589,7 +597,7 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/09/23/基于struts2-5-2-hibernate5-2-2-spring4-3-2搭建SSH框架/" rel="next" title="基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架">
+              <a href="/2016/09/23/基于struts2-5-2-hibernate5-2-2-spring4-3-2搭建SSH框架v2/" rel="next" title="基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架">
                 <i class="fa fa-chevron-left"></i> 基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架
               </a>
             
@@ -651,8 +659,8 @@
           
   <div class="comments" id="comments">
     
-      <div class="ds-thread" data-thread-key="2016/09/25/记一次android程序反编译并二次打包的过程/"
-           data-title="记一次android程序反编译并二次打包的过程" data-url="http://zwgeek.com/2016/09/25/记一次android程序反编译并二次打包的过程/">
+      <div class="ds-thread" data-thread-key="2016/09/25/记一次android程序反编译并二次打包的过程v2/"
+           data-title="记一次android程序反编译并二次打包的过程" data-url="http://zwgeek.com/2016/09/25/记一次android程序反编译并二次打包的过程v2/">
       </div>
     
   </div>
@@ -697,7 +705,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-count">6</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -714,7 +722,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-count">15</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -788,7 +796,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#用ApkTool反编译android程序"><span class="nav-number">1.</span> <span class="nav-text">用ApkTool反编译android程序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#用dex2jar反编译出java源代码"><span class="nav-number">2.</span> <span class="nav-text">用dex2jar反编译出java源代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#用gui查看代码"><span class="nav-number">3.</span> <span class="nav-text">用gui查看代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#重新打包，签名，运行"><span class="nav-number">4.</span> <span class="nav-text">重新打包，签名，运行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#绕过程序防二次打包机制"><span class="nav-number">5.</span> <span class="nav-text">绕过程序防二次打包机制</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Contents"><span class="nav-number">1.</span> <span class="nav-text">Contents</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#用ApkTool反编译android程序"><span class="nav-number">2.</span> <span class="nav-text">用ApkTool反编译android程序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#用dex2jar反编译出java源代码"><span class="nav-number">3.</span> <span class="nav-text">用dex2jar反编译出java源代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#用gui查看代码"><span class="nav-number">4.</span> <span class="nav-text">用gui查看代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#重新打包，签名，运行"><span class="nav-number">5.</span> <span class="nav-text">重新打包，签名，运行</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#绕过程序防二次打包机制"><span class="nav-number">6.</span> <span class="nav-text">绕过程序防二次打包机制</span></a></li></ol></div>
             
           </div>
         </section>
