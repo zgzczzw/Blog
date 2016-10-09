@@ -12,7 +12,7 @@ categories: 服务端开发
 
 终于到了框架搭建的最后一步，实现我们的终极目标SpringMVC+Spring+MyBatis的SSM框架，这篇文章也是基于之前搭建的SpringMVC+Spring+Hibernate框架演变过来的，所以没看过之前几篇文章的同学请乘传送带。
 
-[基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架](http://zwgeek.com/2016/09/23/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6/)
+[基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架](http://zwgeek.com/2016/09/03/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6v2/)
 
 [搭建SpringMVC+Spring4.3.2+Hibernate5.2.2框架](http://zwgeek.com/2016/09/27/%E6%90%AD%E5%BB%BASpringMVC-Spring4-3-2-Hibernate5-2-2%E6%A1%86%E6%9E%B6/)
 

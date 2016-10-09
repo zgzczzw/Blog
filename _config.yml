@@ -90,4 +90,7 @@ deploy:
   type: git
   repository: https://github.com/zgzczzw/zgzczzw.github.io.git
   branch: master
-  plugins: -hexo-generator-feed
+  plugins: 
+   - hexo-generator-feed
+   - hexo-math
+

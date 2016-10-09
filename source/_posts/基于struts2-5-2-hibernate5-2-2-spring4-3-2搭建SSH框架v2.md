@@ -1,6 +1,6 @@
 ---
 title: 基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架
-date: 2016-09-23 18:42:33
+date: 2016-09-3 18:42:33
 tags:
   - Java Web
   - 服务端

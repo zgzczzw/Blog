@@ -7,7 +7,7 @@
 
 <html class="theme-next pisces use-motion">
 <head>
-  <meta charset="UTF-8"/>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 
@@ -102,7 +102,7 @@ struts除了可以做请求转发，还">
 <meta property="og:image" content="http://img.blog.csdn.net/20160927142042958">
 <meta property="og:image" content="http://img.blog.csdn.net/20160927142443663">
 <meta property="og:image" content="http://img.blog.csdn.net/20160927143143944">
-<meta property="og:updated_time" content="2016-09-27T06:32:30.000Z">
+<meta property="og:updated_time" content="2016-10-08T10:31:52.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="搭建SpringMVC+Spring4.3.2+Hibernate5.2.2框架">
 <meta name="twitter:description" content="之前说过，我最终想搭建一个SpringMVC+Spring+MyBatis的框架，然后从SSH框架开始慢慢演化，这篇博客将讲解怎样将SSH框架中的Struts部分替换为SpringMVC做请求转发。
@@ -132,7 +132,7 @@ struts除了可以做请求转发，还">
 
   <link rel="canonical" href="http://zwgeek.com/2016/09/27/搭建SpringMVC-Spring4-3-2-Hibernate5-2-2框架/"/>
 
-  <title> 搭建SpringMVC+Spring4.3.2+Hibernate5.2.2框架 | 逍遥居 </title>
+  <title> 搭建SpringMVC+Spring4.3.2+Hibernate5.2.2框架 | 逍遥居 </title><!-- hexo-inject:begin --><!-- hexo-inject:end -->
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -141,13 +141,28 @@ struts除了可以做请求转发，还">
 
 
 
-  <script type="text/javascript">
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><script type="text/javascript">
     var _hmt = _hmt || [];
     (function() {
       var hm = document.createElement("script");
       hm.src = "//hm.baidu.com/hm.js?3dacdfd5ec97423055f59e8df9a09690";
       var s = document.getElementsByTagName("script")[0];
       s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+      }
+      else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
     })();
   </script>
 
@@ -381,14 +396,14 @@ struts除了可以做请求转发，还">
 
       
         <p>之前说过，我最终想搭建一个SpringMVC+Spring+MyBatis的框架，然后从SSH框架开始慢慢演化，这篇博客将讲解怎样将SSH框架中的Struts部分替换为SpringMVC做请求转发。</p>
-<p>至于为什么要替换成SpringMVC，我在<a href="http://zwgeek.com/2016/09/23/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6/">基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架</a>这篇博客里说过，以下几点：</p>
+<p>至于为什么要替换成SpringMVC，我在<a href="http://zwgeek.com/2016/09/03/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6v2/">基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架</a>这篇博客里说过，以下几点：</p>
 <ul>
 <li>struts除了可以做请求转发，还有页面标签，所以你如果只用请求转发的话，这个框架有点多余</li>
 <li>现在spring推出了springMVC，是专门做请求转发用的，因为是spring自家推出的，所以和spring的协调性更好，而且在我使用中也感觉springMVC用起来更方便，轻量级</li>
 </ul>
 <p>关于SSH框架的搭建可以去这篇文章查看</p>
 <ul>
-<li><a href="http://zwgeek.com/2016/09/23/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6/">基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架</a></li>
+<li><a href="http://zwgeek.com/2016/09/03/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6v2/">基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架</a></li>
 </ul>
 <p>在上面的基础上把Struts换成SpringMVC，其实很简单，为什么这么说呢，因为搭建SSH框架的时候，我们把Spring的所有jar包都加入到项目里了，不知道你有没有注意到，有这样一个jar包</p>
 <p>其实这个jar包就已经是对MVC的支持了，所以可以说我们上一个框架已经支持SpringMVC了，所以问题就变成了去掉Struts框架，所以很简单。</p>
@@ -428,7 +443,7 @@ struts除了可以做请求转发，还">
 <figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</div><div class="line"><span class="tag">&lt;<span class="name">beans</span> <span class="attr">xmlns</span>=<span class="string">"http://www.springframework.org/schema/beans"</span></span></div><div class="line">	<span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></div><div class="line">	<span class="attr">xsi:schemaLocation</span>=<span class="string">"http://www.springframework.org/schema/beans</span></div><div class="line">           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd"&gt;</div><div class="line"></div><div class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"userDao"</span> <span class="attr">class</span>=<span class="string">"com.mvc.daoImpl.UserDao"</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"sessionFactory"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">ref</span> <span class="attr">bean</span>=<span class="string">"sessionFactory"</span> /&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">	<span class="tag">&lt;/<span class="name">bean</span>&gt;</span></div><div class="line"></div><div class="line">	<span class="comment">&lt;!--用户注册业务逻辑类 --&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"userManager"</span> <span class="attr">class</span>=<span class="string">"com.mvc.manager.UserManager"</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"dao"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">ref</span> <span class="attr">bean</span>=<span class="string">"userDao"</span> /&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">	<span class="tag">&lt;/<span class="name">bean</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">beans</span>&gt;</span></div></pre></td></tr></table></figure>
 <p>spring-common.xml</p>
 <figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</div><div class="line"><span class="tag">&lt;<span class="name">beans</span> <span class="attr">xmlns</span>=<span class="string">"http://www.springframework.org/schema/beans"</span></span></div><div class="line">	<span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="attr">xmlns:context</span>=<span class="string">"http://www.springframework.org/schema/context"</span></div><div class="line">	<span class="attr">xmlns:mvc</span>=<span class="string">"http://www.springframework.org/schema/mvc"</span></div><div class="line">	<span class="attr">xsi:schemaLocation</span>=<span class="string">"http://www.springframework.org/schema/beans </span></div><div class="line">	http://www.springframework.org/schema/beans/spring-beans.xsd"&gt;</div><div class="line"></div><div class="line">	<span class="comment">&lt;!-- 定义数据源的信息 --&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"dataSource"</span> <span class="attr">class</span>=<span class="string">"com.mchange.v2.c3p0.ComboPooledDataSource"</span></span></div><div class="line">		<span class="attr">destroy-method</span>=<span class="string">"close"</span>&gt;</div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"driverClass"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">value</span>&gt;</span>com.mysql.jdbc.Driver<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"jdbcUrl"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">value</span>&gt;</span>jdbc:mysql://localhost:3306/test<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"user"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">value</span>&gt;</span>root<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"password"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">value</span>&gt;</span>zzw<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"maxPoolSize"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">value</span>&gt;</span>80<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"minPoolSize"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">value</span>&gt;</span>1<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"initialPoolSize"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">value</span>&gt;</span>1<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"maxIdleTime"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">value</span>&gt;</span>20<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">	<span class="tag">&lt;/<span class="name">bean</span>&gt;</span></div><div class="line"></div><div class="line">	<span class="comment">&lt;!--定义Hibernate的SessionFactory --&gt;</span></div><div class="line">	<span class="comment">&lt;!-- SessionFactory使用的数据源为上面的数据源 --&gt;</span></div><div class="line">	<span class="comment">&lt;!-- 指定了Hibernate的映射文件和配置信息 --&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"sessionFactory"</span></span></div><div class="line">		<span class="attr">class</span>=<span class="string">"org.springframework.orm.hibernate5.LocalSessionFactoryBean"</span>&gt;</div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"dataSource"</span> <span class="attr">ref</span>=<span class="string">"dataSource"</span> /&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"mappingResources"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">list</span>&gt;</span></div><div class="line">				<span class="tag">&lt;<span class="name">value</span>&gt;</span>com/mvc/pojo/User.hbm.xml<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line">			<span class="tag">&lt;/<span class="name">list</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"hibernateProperties"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">props</span>&gt;</span></div><div class="line">				<span class="tag">&lt;<span class="name">prop</span> <span class="attr">key</span>=<span class="string">"hibernate.dialect"</span>&gt;</span>org.hibernate.dialect.MySQLDialect<span class="tag">&lt;/<span class="name">prop</span>&gt;</span></div><div class="line">				<span class="tag">&lt;<span class="name">prop</span> <span class="attr">key</span>=<span class="string">"show_sql"</span>&gt;</span>true<span class="tag">&lt;/<span class="name">prop</span>&gt;</span></div><div class="line">				<span class="tag">&lt;<span class="name">prop</span> <span class="attr">key</span>=<span class="string">"hibernate.jdbc.batch_size"</span>&gt;</span>20<span class="tag">&lt;/<span class="name">prop</span>&gt;</span></div><div class="line">			<span class="tag">&lt;/<span class="name">props</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">	<span class="tag">&lt;/<span class="name">bean</span>&gt;</span></div><div class="line"></div><div class="line">	<span class="comment">&lt;!-- 配置一个事务管理器 --&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"transactionManager"</span></span></div><div class="line">		<span class="attr">class</span>=<span class="string">"org.springframework.orm.hibernate5.HibernateTransactionManager"</span>&gt;</div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"sessionFactory"</span> <span class="attr">ref</span>=<span class="string">"sessionFactory"</span> /&gt;</span></div><div class="line">	<span class="tag">&lt;/<span class="name">bean</span>&gt;</span></div><div class="line"></div><div class="line">	<span class="comment">&lt;!-- 配置事务，使用代理的方式 --&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">"transactionProxy"</span></span></div><div class="line">		<span class="attr">class</span>=<span class="string">"org.springframework.transaction.interceptor.TransactionProxyFactoryBean"</span></div><div class="line">		<span class="attr">abstract</span>=<span class="string">"true"</span>&gt;</div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"transactionManager"</span> <span class="attr">ref</span>=<span class="string">"transactionManager"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"transactionAttributes"</span>&gt;</span></div><div class="line">			<span class="tag">&lt;<span class="name">props</span>&gt;</span></div><div class="line">				<span class="tag">&lt;<span class="name">prop</span> <span class="attr">key</span>=<span class="string">"add*"</span>&gt;</span>PROPAGATION_REQUIRED,-Exception<span class="tag">&lt;/<span class="name">prop</span>&gt;</span></div><div class="line">				<span class="tag">&lt;<span class="name">prop</span> <span class="attr">key</span>=<span class="string">"modify*"</span>&gt;</span>PROPAGATION_REQUIRED,-myException<span class="tag">&lt;/<span class="name">prop</span>&gt;</span></div><div class="line">				<span class="tag">&lt;<span class="name">prop</span> <span class="attr">key</span>=<span class="string">"del*"</span>&gt;</span>PROPAGATION_REQUIRED<span class="tag">&lt;/<span class="name">prop</span>&gt;</span></div><div class="line">				<span class="tag">&lt;<span class="name">prop</span> <span class="attr">key</span>=<span class="string">"*"</span>&gt;</span>PROPAGATION_REQUIRED<span class="tag">&lt;/<span class="name">prop</span>&gt;</span></div><div class="line">			<span class="tag">&lt;/<span class="name">props</span>&gt;</span></div><div class="line">		<span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">	<span class="tag">&lt;/<span class="name">bean</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">beans</span>&gt;</span></div></pre></td></tr></table></figure>
-<p>其他像DAO类，manager类就不细说了，不懂得可以看我上一篇文章<a href="http://zwgeek.com/2016/09/23/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6/">基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架</a></p>
+<p>其他像DAO类，manager类就不细说了，不懂得可以看我上一篇文章<a href="http://zwgeek.com/2016/09/03/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6v2/">基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架</a></p>
 <p>整个项目的结构如下</p>
 <p><img src="http://img.blog.csdn.net/20160927143143944" alt=""></p>
 
@@ -590,7 +605,7 @@ struts除了可以做请求转发，还">
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-count">7</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -598,7 +613,7 @@ struts除了可以做请求转发，还">
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-count">4</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -607,7 +622,7 @@ struts除了可以做请求转发，还">
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-count">18</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -708,14 +723,14 @@ struts除了可以做请求转发，还">
 </div>
 
 <div class="powered-by">
-  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+  <!--由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动-->
 </div>
 
 <div class="theme-info">
-  主题 -
+  <!--主题 -
   <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
     NexT.Pisces
-  </a>
+  </a>-->
 </div>
 
         
@@ -1069,7 +1084,24 @@ struts除了可以做请求转发，还">
         showTime(Counter);
       }
     });
-  </script>
+  </script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
 
 
 

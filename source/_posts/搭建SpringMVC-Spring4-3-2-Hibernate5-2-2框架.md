@@ -9,14 +9,14 @@ categories: 服务端开发
 ---
 之前说过，我最终想搭建一个SpringMVC+Spring+MyBatis的框架，然后从SSH框架开始慢慢演化，这篇博客将讲解怎样将SSH框架中的Struts部分替换为SpringMVC做请求转发。
 
-至于为什么要替换成SpringMVC，我在[基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架](http://zwgeek.com/2016/09/23/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6/)这篇博客里说过，以下几点：
+至于为什么要替换成SpringMVC，我在[基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架](http://zwgeek.com/2016/09/03/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6v2/)这篇博客里说过，以下几点：
 
 - struts除了可以做请求转发，还有页面标签，所以你如果只用请求转发的话，这个框架有点多余
 - 现在spring推出了springMVC，是专门做请求转发用的，因为是spring自家推出的，所以和spring的协调性更好，而且在我使用中也感觉springMVC用起来更方便，轻量级
 
 关于SSH框架的搭建可以去这篇文章查看
 
-- [基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架](http://zwgeek.com/2016/09/23/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6/)
+- [基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架](http://zwgeek.com/2016/09/03/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6v2/)
 
 在上面的基础上把Struts换成SpringMVC，其实很简单，为什么这么说呢，因为搭建SSH框架的时候，我们把Spring的所有jar包都加入到项目里了，不知道你有没有注意到，有这样一个jar包
 
@@ -361,7 +361,7 @@ spring-common.xml
 </beans>
 ```
 
-其他像DAO类，manager类就不细说了，不懂得可以看我上一篇文章[基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架](http://zwgeek.com/2016/09/23/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6/)
+其他像DAO类，manager类就不细说了，不懂得可以看我上一篇文章[基于struts2.5.2+hibernate5.2.2+spring4.3.2搭建SSH框架](http://zwgeek.com/2016/09/03/%E5%9F%BA%E4%BA%8Estruts2-5-2-hibernate5-2-2-spring4-3-2%E6%90%AD%E5%BB%BASSH%E6%A1%86%E6%9E%B6v2/)
 
 整个项目的结构如下
 
