@@ -1,0 +1,1121 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Android,Activity启动,系统," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="逍遥居" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="例行广告，喜欢这篇文章的朋友可以关注我的博客http://zwgeek.com
+之前几篇文章分析了Activity的启动流程，当时因为要抓启动的主线，所以中间涉及到一些类之间的关系都一笔带过了。后来再重新看前面文章的时候发现没有这部分的讲解，很影响理解，所以今天准备把这些详细拿出来讲一下。
+没看过Activity启动流程分析的同学可以去看一下，因为这篇文章中会直接引用启动流程中已经说过的一些点。以">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Activity的管理结构分析及源码解析">
+<meta property="og:url" content="http://zwgeek.com/2016/11/02/Activity管理结构及源码分析/index.html">
+<meta property="og:site_name" content="逍遥居">
+<meta property="og:description" content="例行广告，喜欢这篇文章的朋友可以关注我的博客http://zwgeek.com
+之前几篇文章分析了Activity的启动流程，当时因为要抓启动的主线，所以中间涉及到一些类之间的关系都一笔带过了。后来再重新看前面文章的时候发现没有这部分的讲解，很影响理解，所以今天准备把这些详细拿出来讲一下。
+没看过Activity启动流程分析的同学可以去看一下，因为这篇文章中会直接引用启动流程中已经说过的一些点。以">
+<meta property="og:image" content="http://img.blog.csdn.net/20161102165944689">
+<meta property="og:image" content="http://img.blog.csdn.net/20161102175329326">
+<meta property="og:image" content="http://img.blog.csdn.net/20161102175501924">
+<meta property="og:image" content="http://img.blog.csdn.net/20161102175850425">
+<meta property="og:image" content="http://img.blog.csdn.net/20161102180002769">
+<meta property="og:updated_time" content="2016-11-02T10:07:59.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Activity的管理结构分析及源码解析">
+<meta name="twitter:description" content="例行广告，喜欢这篇文章的朋友可以关注我的博客http://zwgeek.com
+之前几篇文章分析了Activity的启动流程，当时因为要抓启动的主线，所以中间涉及到一些类之间的关系都一笔带过了。后来再重新看前面文章的时候发现没有这部分的讲解，很影响理解，所以今天准备把这些详细拿出来讲一下。
+没看过Activity启动流程分析的同学可以去看一下，因为这篇文章中会直接引用启动流程中已经说过的一些点。以">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20161102165944689">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://zwgeek.com/2016/11/02/Activity管理结构及源码分析/"/>
+
+  <title> Activity的管理结构分析及源码解析 | 逍遥居 </title><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?3dacdfd5ec97423055f59e8df9a09690";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+      }
+      else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">逍遥居</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Activity的管理结构分析及源码解析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-11-02T17:03:13+08:00" content="2016-11-02">
+              2016-11-02
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/11/02/Activity管理结构及源码分析/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/11/02/Activity管理结构及源码分析/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/11/02/Activity管理结构及源码分析/" class="leancloud_visitors" data-flag-title="Activity的管理结构分析及源码解析">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>例行广告，喜欢这篇文章的朋友可以关注我的博客<a href="http://zwgeek.com">http://zwgeek.com</a></p>
+<p>之前几篇文章分析了Activity的启动流程，当时因为要抓启动的主线，所以中间涉及到一些类之间的关系都一笔带过了。后来再重新看前面文章的时候发现没有这部分的讲解，很影响理解，所以今天准备把这些详细拿出来讲一下。</p>
+<p>没看过Activity启动流程分析的同学可以去看一下，因为这篇文章中会直接引用启动流程中已经说过的一些点。以下是传送门。</p>
+<p><a href="http://zwgeek.com/2016/10/09/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/">Activity启动流程分析</a></p>
+<p><a href="http://zwgeek.com/2016/10/25/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%902/">Activity启动流程分析(二)</a></p>
+<p><a href="http://zwgeek.com/2016/10/26/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E7%95%AA%E5%A4%96%E7%AF%87/">Activity启动流程番外篇</a></p>
+<p>这篇文章是带着这样一个问题来讲的，我们知道Android分为Server和Client两部分，那么Activity在这两部分中是怎么被组织被管理的。管理Activity的各部分组件又是什么时候生成的，并且在管理过程中起到了什么作用。</p>
+<h3 id="Activity的管理结构"><a href="#Activity的管理结构" class="headerlink" title="Activity的管理结构"></a>Activity的管理结构</h3><p>先放一张结果图</p>
+<p><img src="http://img.blog.csdn.net/20161102165944689" alt="这里写图片描述"></p>
+<p>这就是整个Android中对Activity的管理结构，左边是Client端也就是APP部分，右边是Server端也就是Android System部分。</p>
+<p>我们先来看Server端，在Server端跟Activity有关系的最大的类就是ActivityManagerService了，但是它更像是一个上帝类，而不是管理结构中的一部分，所以我就没有把它列在图上。</p>
+<p>那么我们依次来看图上的部分<br>ActivityStackSupervisor，这个类像是一个工具类，会封装一些管理Activity的操作，但相信我，真正做事情的肯定不是它。</p>
+<p>下面就是管理结构了，最外层是ActivityStack，直译过来是Activity栈，但却不是我们通常意义上理解的Activity栈，因为这个ActivityStack在Android中只有两个，HomeStack和FocusStack，跟Launcher有关的Activity都在HomeStack中，其他所有Activity都在FocusStack中。</p>
+<p>然后ActivityStack中有TaskRecord，这个TaskRecord才是我们理解的Activity栈，一系列有关的Activity都在一个TaskRecord中，并且只有在一个TaskRecord中的Activity才能调用startActivityForResult，这个是前面提到的。这个TaskRecord跟两个参数息息相关。</p>
+<ul>
+<li>FLAG_ACTIVITY_NEW_TASK</li>
+<li>affinity</li>
+</ul>
+<p>这两个参数熟悉开发的朋友应该都很熟悉吧。</p>
+<p>然后在TaskRecord中有ActivityRecord，这个ActivityRecord在Server端就对应着一个Activity。是的，在Server端并没有真正的Activity实例，而只有Activity的token，而这个token就是存在ActivityRecord中的appToken，ActivityRecord还记录了一些其他的必要信息。</p>
+<p>Token的类型是IApplicationToken.Stub，也是个Binder对象，服务端只存储Activity对应的Token。而真正的Activity实例是存储在Client端的。Server端就是通过token去Client端找到对应的Activity实例的。</p>
+<p>接下来我们看Client端，在Client端也不是直接存储Activity的，因为还有一些Activity的信息要记录，所以Client端存的是Activity的包装类ActivityClientRecord，在ActivityClientRecord中包含有真正的Activity实例。</p>
+<p>整个管理结构就是这样的，其实很简单。但是要从Android那繁杂错乱的源码中梳理出这层关系，还真是花了我好长时间。下面我们从源码中来验证这层管理关系。</p>
+<h4 id="1-ActivityStackSupervisor"><a href="#1-ActivityStackSupervisor" class="headerlink" title="1. ActivityStackSupervisor"></a>1. ActivityStackSupervisor</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/** The stack containing the launcher app. Assumed to always be attached to</span></div><div class="line">     * Display.DEFAULT_DISPLAY. */</div><div class="line">    <span class="keyword">private</span> ActivityStack mHomeStack;</div><div class="line"></div><div class="line">    <span class="comment">/** The stack currently receiving input or launching the next activity. */</span></div><div class="line">    <span class="keyword">private</span> ActivityStack mFocusedStack;</div><div class="line"></div><div class="line">    <span class="comment">/** If this is the same as mFocusedStack then the activity on the top of the focused stack has</span></div><div class="line">     * been resumed. If stacks are changing position this will hold the old stack until the new</div><div class="line">     * stack becomes resumed after which it will be set to mFocusedStack. */</div><div class="line">    <span class="keyword">private</span> ActivityStack mLastFocusedStack;</div></pre></td></tr></table></figure>
+<p>ActivityStackSupervisor中就这三个ActivityStack，正如前面说的mHomeStack是存所有与Launcher有关的Activity。mFocusStack是存所有其他的Activity。mLastFocusedStack是一个备份用的，从注释可以看出，是用来备份mFocusStack的。</p>
+<p>至于为什么这样做，当然为了用户体验了，用户可以随时回到桌面就是因为这种管理结构。</p>
+<h4 id="2-ActivityStack"><a href="#2-ActivityStack" class="headerlink" title="2. ActivityStack"></a>2. ActivityStack</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line">     * The back history of all previous (and possibly still</div><div class="line">     * running) activities.  It contains #TaskRecord objects.</div><div class="line">     */</div><div class="line">    <span class="keyword">private</span> ArrayList&lt;TaskRecord&gt; mTaskHistory = <span class="keyword">new</span> ArrayList&lt;TaskRecord&gt;();</div></pre></td></tr></table></figure>
+<p>ActivityStack中存有一个TaskRecord的List，不同的TaskRecord就保存在这个List中。</p>
+<p>另外，为了方便调用，AMS中这些类都持有它上一级管理者的引用，比如在ActivityStack代码中你就可以看到这样的引用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/** Run all ActivityStacks through this */</span></div><div class="line">  <span class="keyword">final</span> ActivityStackSupervisor mStackSupervisor;</div></pre></td></tr></table></figure>
+<h4 id="3-TaskRecord"><a href="#3-TaskRecord" class="headerlink" title="3. TaskRecord"></a>3. TaskRecord</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/** List of all activities in the task arranged in history order */</span></div><div class="line">    <span class="keyword">final</span> ArrayList&lt;ActivityRecord&gt; mActivities;</div></pre></td></tr></table></figure>
+<p>TaskRecord中存的是一个ActivityRecord的List，这个List就是我们传统意义上理解的Activity栈，这个List中Activity的顺序也就是Activity在屏幕上被启动的顺序。</p>
+<p>同样的，TaskRecord也持有它的上一级管理器ActivityStack的引用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/** Current stack */</span></div><div class="line">    ActivityStack stack;</div></pre></td></tr></table></figure>
+<h4 id="4-ActivityRecord"><a href="#4-ActivityRecord" class="headerlink" title="4. ActivityRecord"></a>4. ActivityRecord</h4><p>在AMS这边的Activity，就是ActivityRecord了，它的变量中有真正Activity对应的token。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">final</span> IApplicationToken.Stub appToken; <span class="comment">// window manager token</span></div></pre></td></tr></table></figure>
+<p>同时，他也持有它父管理器的一些引用<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">TaskRecord task;        <span class="comment">// the task this is in.</span></div></pre></td></tr></table></figure></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">final</span> ActivityManagerService service; <span class="comment">// owner</span></div></pre></td></tr></table></figure>
+<p>以上就是Server端对Activity的管理结构，接下来我们看Client端的管理结构</p>
+<h4 id="5-ActivityThread"><a href="#5-ActivityThread" class="headerlink" title="5. ActivityThread"></a>5. ActivityThread</h4><p>Client这边最大的类是ActivityThread，我们知道，在ActivityThread中就管理着所有的Acitivity。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">final</span> ArrayMap&lt;IBinder, ActivityClientRecord&gt; mActivities</div><div class="line">            = <span class="keyword">new</span> ArrayMap&lt;IBinder, ActivityClientRecord&gt;();</div></pre></td></tr></table></figure>
+<p>ActivityThread中有一个ActivityClientRecord的Map，Map的key就是Activity的token。</p>
+<h4 id="6-ActivityClientRecord"><a href="#6-ActivityClientRecord" class="headerlink" title="6. ActivityClientRecord"></a>6. ActivityClientRecord</h4><p>在ActivityClientRecord中，存有真正的Activity实例和他对应的token。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">IBinder token;</div><div class="line">Activity activity;</div></pre></td></tr></table></figure>
+<h4 id="7-相互调用"><a href="#7-相互调用" class="headerlink" title="7. 相互调用"></a>7. 相互调用</h4><p>接下来我们用一小段代码来说明一下Server端是怎么查找到Activity的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//调用onResume              next.app.thread.scheduleResumeActivity(next.appToken, next.app.repProcState,mService.isNextTransitionForward(), resumeAnimOptions);</span></div></pre></td></tr></table></figure>
+<p>这是在ActivityStack中的一段调用Resume的方法，看了前面的Activity启动流程分析，我们知道scheduleResumeActivity最终会被ActivityThread的handleResumeActivity处理。</p>
+<p>handleResumeActivity又交给了performResumeActivity去处理这件事，我们看performResumeActivity的代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> ActivityClientRecord <span class="title">performResumeActivity</span><span class="params">(IBinder token,</span></span></div><div class="line">           <span class="keyword">boolean</span> clearHide) &#123;</div><div class="line">       ActivityClientRecord r = mActivities.get(token);</div><div class="line">       ...</div><div class="line">       r.activity.performResume();</div></pre></td></tr></table></figure>
+<p>看，Client端会首先根据token从mActivities中找到ActivityClientRecord，然后取出AcitivityClientRecord中的Activity，去调用它的onResume方法。</p>
+<h3 id="管理结构的创建时间点"><a href="#管理结构的创建时间点" class="headerlink" title="管理结构的创建时间点"></a>管理结构的创建时间点</h3><p>好的，已经讲完了Activity的管理结构，我们知道在Activity的启动过程中，这个管理结构的类会被依次创建，那么他们是在什么时间点被创建的呢？</p>
+<p>前面分析Activity的时候我没有特别去讲解这个结构的创建，这里就补充一下这个点。我会说每个结构是在哪个方法中被创建的，但是方法是在什么时候调用的， 不清楚的同学可以去查阅Activity启动流程分析。</p>
+<p>ActivityStackSupervisor因为很重要，所以在ActivityManagerService构造函数的时候就创建了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="title">ActivityManagerService</span><span class="params">(Context systemContext)</span> </span>&#123;</div><div class="line">       ...</div><div class="line">       mStackSupervisor = <span class="keyword">new</span> ActivityStackSupervisor(<span class="keyword">this</span>);</div><div class="line">       ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>ActivityRecord是在ActivityStackSupervisor的startActivityLocked中被创建的，如下图</p>
+<p><img src="http://img.blog.csdn.net/20161102175329326" alt="这里写图片描述"></p>
+<p>然后ActivityStack和TaskRecord在同个类的startActivityUncheckedlocked方法中被创建，如下图。</p>
+<p><img src="http://img.blog.csdn.net/20161102175501924" alt="这里写图片描述"></p>
+<p>adjustStackFocus中会创建ActivityStack，但是正如前面说的，只有当mFocusStack没有被创建的时候才会重新创建，如果mFocusStack已经有啦，那么，就用mFocusStack。</p>
+<p>至此，Server端这边的结构都被创建出来了，然后再看Client端的结构。</p>
+<p>ActivityClientRecord是在ActivityThread的scheduleLaunchActivity，如图</p>
+<p><img src="http://img.blog.csdn.net/20161102175850425" alt="这里写图片描述"></p>
+<p>注意，这个时候Activity实例还没有被创建出来。而Activity的创建是在什么点呢。</p>
+<p><img src="http://img.blog.csdn.net/20161102180002769" alt="这里写图片描述"></p>
+<p>在performLaunchActivity中，并且创建完了之后把自己加入到ActivityClientRecord中，然后把ActivityCLientRecord加入到mActivities中。</p>
+<p>至此，所有的管理结构都创建完成，Activity也基本启动完成了。</p>
+<p>例行广告，喜欢这篇文章的朋友可以关注我的博客<a href="http://zwgeek.com">http://zwgeek.com</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/uploads/wechat-reward-image.jpeg" alt="轩辕 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag">#Android</a>
+          
+            <a href="/tags/Activity启动/" rel="tag">#Activity启动</a>
+          
+            <a href="/tags/系统/" rel="tag">#系统</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/26/Activity启动流程番外篇/" rel="next" title="Activity启动流程番外篇">
+                <i class="fa fa-chevron-left"></i> Activity启动流程番外篇
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  <p>热评文章</p>
+  <div class="ds-top-threads" data-range="weekly" data-num-items="4"></div>
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/11/02/Activity管理结构及源码分析/"
+           data-title="Activity的管理结构分析及源码解析" data-url="http://zwgeek.com/2016/11/02/Activity管理结构及源码分析/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="轩辕" />
+          <p class="site-author-name" itemprop="name">轩辕</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">12</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">22</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xuan-yuan-40-22" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zgzczzw" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/zgzczzw" target="_blank" title="CSDN">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  CSDN
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.douban.com/people/65077069/" target="_blank" title="豆瓣">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  豆瓣
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Activity的管理结构"><span class="nav-number">1.</span> <span class="nav-text">Activity的管理结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-ActivityStackSupervisor"><span class="nav-number">1.1.</span> <span class="nav-text">1. ActivityStackSupervisor</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-ActivityStack"><span class="nav-number">1.2.</span> <span class="nav-text">2. ActivityStack</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-TaskRecord"><span class="nav-number">1.3.</span> <span class="nav-text">3. TaskRecord</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-ActivityRecord"><span class="nav-number">1.4.</span> <span class="nav-text">4. ActivityRecord</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-ActivityThread"><span class="nav-number">1.5.</span> <span class="nav-text">5. ActivityThread</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-ActivityClientRecord"><span class="nav-number">1.6.</span> <span class="nav-text">6. ActivityClientRecord</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7-相互调用"><span class="nav-number">1.7.</span> <span class="nav-text">7. 相互调用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#管理结构的创建时间点"><span class="nav-number">2.</span> <span class="nav-text">管理结构的创建时间点</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2015 - 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">轩辕</span>
+</div>
+
+<div class="powered-by">
+  <!--由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动-->
+</div>
+
+<div class="theme-info">
+  <!--主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>-->
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zgzczzw"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = true;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '' && data_content != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title < 0 && index_content < 0 ){
+                                isMatch = false;
+                            } else {
+                                if (index_content < 0) {
+                                    index_content = 0;
+                                }
+                                if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            }
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("HkzSeXgqv4E0fnYfDSnSPqlh-gzGzoHsz", "aJ6qgC0qEVu8NyCBj9zqC7Sr");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+
+
+  
+
+</body>
+</html>

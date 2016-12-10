@@ -4,6 +4,528 @@
   
     
     <entry>
+      <title><![CDATA[Activity的管理结构分析及源码解析]]></title>
+      <url>http://zwgeek.com/2016/11/02/Activity%E7%AE%A1%E7%90%86%E7%BB%93%E6%9E%84%E5%8F%8A%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>例行广告，喜欢这篇文章的朋友可以关注我的博客<a href="http://zwgeek.com">http://zwgeek.com</a></p>
+<p>之前几篇文章分析了Activity的启动流程，当时因为要抓启动的主线，所以中间涉及到一些类之间的关系都一笔带过了。后来再重新看前面文章的时候发现没有这部分的讲解，很影响理解，所以今天准备把这些详细拿出来讲一下。</p>
+<p>没看过Activity启动流程分析的同学可以去看一下，因为这篇文章中会直接引用启动流程中已经说过的一些点。以下是传送门。</p>
+<p><a href="http://zwgeek.com/2016/10/09/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/">Activity启动流程分析</a></p>
+<p><a href="http://zwgeek.com/2016/10/25/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%902/">Activity启动流程分析(二)</a></p>
+<p><a href="http://zwgeek.com/2016/10/26/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E7%95%AA%E5%A4%96%E7%AF%87/">Activity启动流程番外篇</a></p>
+<p>这篇文章是带着这样一个问题来讲的，我们知道Android分为Server和Client两部分，那么Activity在这两部分中是怎么被组织被管理的。管理Activity的各部分组件又是什么时候生成的，并且在管理过程中起到了什么作用。</p>
+<h3 id="Activity的管理结构"><a href="#Activity的管理结构" class="headerlink" title="Activity的管理结构"></a>Activity的管理结构</h3><p>先放一张结果图</p>
+<p><img src="http://img.blog.csdn.net/20161102165944689" alt="这里写图片描述"></p>
+<p>这就是整个Android中对Activity的管理结构，左边是Client端也就是APP部分，右边是Server端也就是Android System部分。</p>
+<p>我们先来看Server端，在Server端跟Activity有关系的最大的类就是ActivityManagerService了，但是它更像是一个上帝类，而不是管理结构中的一部分，所以我就没有把它列在图上。</p>
+<p>那么我们依次来看图上的部分<br>ActivityStackSupervisor，这个类像是一个工具类，会封装一些管理Activity的操作，但相信我，真正做事情的肯定不是它。</p>
+<p>下面就是管理结构了，最外层是ActivityStack，直译过来是Activity栈，但却不是我们通常意义上理解的Activity栈，因为这个ActivityStack在Android中只有两个，HomeStack和FocusStack，跟Launcher有关的Activity都在HomeStack中，其他所有Activity都在FocusStack中。</p>
+<p>然后ActivityStack中有TaskRecord，这个TaskRecord才是我们理解的Activity栈，一系列有关的Activity都在一个TaskRecord中，并且只有在一个TaskRecord中的Activity才能调用startActivityForResult，这个是前面提到的。这个TaskRecord跟两个参数息息相关。</p>
+<ul>
+<li>FLAG_ACTIVITY_NEW_TASK</li>
+<li>affinity</li>
+</ul>
+<p>这两个参数熟悉开发的朋友应该都很熟悉吧。</p>
+<p>然后在TaskRecord中有ActivityRecord，这个ActivityRecord在Server端就对应着一个Activity。是的，在Server端并没有真正的Activity实例，而只有Activity的token，而这个token就是存在ActivityRecord中的appToken，ActivityRecord还记录了一些其他的必要信息。</p>
+<p>Token的类型是IApplicationToken.Stub，也是个Binder对象，服务端只存储Activity对应的Token。而真正的Activity实例是存储在Client端的。Server端就是通过token去Client端找到对应的Activity实例的。</p>
+<p>接下来我们看Client端，在Client端也不是直接存储Activity的，因为还有一些Activity的信息要记录，所以Client端存的是Activity的包装类ActivityClientRecord，在ActivityClientRecord中包含有真正的Activity实例。</p>
+<p>整个管理结构就是这样的，其实很简单。但是要从Android那繁杂错乱的源码中梳理出这层关系，还真是花了我好长时间。下面我们从源码中来验证这层管理关系。</p>
+<h4 id="1-ActivityStackSupervisor"><a href="#1-ActivityStackSupervisor" class="headerlink" title="1. ActivityStackSupervisor"></a>1. ActivityStackSupervisor</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/** The stack containing the launcher app. Assumed to always be attached to</span></div><div class="line">     * Display.DEFAULT_DISPLAY. */</div><div class="line">    <span class="keyword">private</span> ActivityStack mHomeStack;</div><div class="line"></div><div class="line">    <span class="comment">/** The stack currently receiving input or launching the next activity. */</span></div><div class="line">    <span class="keyword">private</span> ActivityStack mFocusedStack;</div><div class="line"></div><div class="line">    <span class="comment">/** If this is the same as mFocusedStack then the activity on the top of the focused stack has</span></div><div class="line">     * been resumed. If stacks are changing position this will hold the old stack until the new</div><div class="line">     * stack becomes resumed after which it will be set to mFocusedStack. */</div><div class="line">    <span class="keyword">private</span> ActivityStack mLastFocusedStack;</div></pre></td></tr></table></figure>
+<p>ActivityStackSupervisor中就这三个ActivityStack，正如前面说的mHomeStack是存所有与Launcher有关的Activity。mFocusStack是存所有其他的Activity。mLastFocusedStack是一个备份用的，从注释可以看出，是用来备份mFocusStack的。</p>
+<p>至于为什么这样做，当然为了用户体验了，用户可以随时回到桌面就是因为这种管理结构。</p>
+<h4 id="2-ActivityStack"><a href="#2-ActivityStack" class="headerlink" title="2. ActivityStack"></a>2. ActivityStack</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line">     * The back history of all previous (and possibly still</div><div class="line">     * running) activities.  It contains #TaskRecord objects.</div><div class="line">     */</div><div class="line">    <span class="keyword">private</span> ArrayList&lt;TaskRecord&gt; mTaskHistory = <span class="keyword">new</span> ArrayList&lt;TaskRecord&gt;();</div></pre></td></tr></table></figure>
+<p>ActivityStack中存有一个TaskRecord的List，不同的TaskRecord就保存在这个List中。</p>
+<p>另外，为了方便调用，AMS中这些类都持有它上一级管理者的引用，比如在ActivityStack代码中你就可以看到这样的引用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/** Run all ActivityStacks through this */</span></div><div class="line">  <span class="keyword">final</span> ActivityStackSupervisor mStackSupervisor;</div></pre></td></tr></table></figure>
+<h4 id="3-TaskRecord"><a href="#3-TaskRecord" class="headerlink" title="3. TaskRecord"></a>3. TaskRecord</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/** List of all activities in the task arranged in history order */</span></div><div class="line">    <span class="keyword">final</span> ArrayList&lt;ActivityRecord&gt; mActivities;</div></pre></td></tr></table></figure>
+<p>TaskRecord中存的是一个ActivityRecord的List，这个List就是我们传统意义上理解的Activity栈，这个List中Activity的顺序也就是Activity在屏幕上被启动的顺序。</p>
+<p>同样的，TaskRecord也持有它的上一级管理器ActivityStack的引用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/** Current stack */</span></div><div class="line">    ActivityStack stack;</div></pre></td></tr></table></figure>
+<h4 id="4-ActivityRecord"><a href="#4-ActivityRecord" class="headerlink" title="4. ActivityRecord"></a>4. ActivityRecord</h4><p>在AMS这边的Activity，就是ActivityRecord了，它的变量中有真正Activity对应的token。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">final</span> IApplicationToken.Stub appToken; <span class="comment">// window manager token</span></div></pre></td></tr></table></figure>
+<p>同时，他也持有它父管理器的一些引用<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">TaskRecord task;        <span class="comment">// the task this is in.</span></div></pre></td></tr></table></figure></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">final</span> ActivityManagerService service; <span class="comment">// owner</span></div></pre></td></tr></table></figure>
+<p>以上就是Server端对Activity的管理结构，接下来我们看Client端的管理结构</p>
+<h4 id="5-ActivityThread"><a href="#5-ActivityThread" class="headerlink" title="5. ActivityThread"></a>5. ActivityThread</h4><p>Client这边最大的类是ActivityThread，我们知道，在ActivityThread中就管理着所有的Acitivity。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">final</span> ArrayMap&lt;IBinder, ActivityClientRecord&gt; mActivities</div><div class="line">            = <span class="keyword">new</span> ArrayMap&lt;IBinder, ActivityClientRecord&gt;();</div></pre></td></tr></table></figure>
+<p>ActivityThread中有一个ActivityClientRecord的Map，Map的key就是Activity的token。</p>
+<h4 id="6-ActivityClientRecord"><a href="#6-ActivityClientRecord" class="headerlink" title="6. ActivityClientRecord"></a>6. ActivityClientRecord</h4><p>在ActivityClientRecord中，存有真正的Activity实例和他对应的token。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">IBinder token;</div><div class="line">Activity activity;</div></pre></td></tr></table></figure>
+<h4 id="7-相互调用"><a href="#7-相互调用" class="headerlink" title="7. 相互调用"></a>7. 相互调用</h4><p>接下来我们用一小段代码来说明一下Server端是怎么查找到Activity的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//调用onResume              next.app.thread.scheduleResumeActivity(next.appToken, next.app.repProcState,mService.isNextTransitionForward(), resumeAnimOptions);</span></div></pre></td></tr></table></figure>
+<p>这是在ActivityStack中的一段调用Resume的方法，看了前面的Activity启动流程分析，我们知道scheduleResumeActivity最终会被ActivityThread的handleResumeActivity处理。</p>
+<p>handleResumeActivity又交给了performResumeActivity去处理这件事，我们看performResumeActivity的代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> ActivityClientRecord <span class="title">performResumeActivity</span><span class="params">(IBinder token,</span></span></div><div class="line">           <span class="keyword">boolean</span> clearHide) &#123;</div><div class="line">       ActivityClientRecord r = mActivities.get(token);</div><div class="line">       ...</div><div class="line">       r.activity.performResume();</div></pre></td></tr></table></figure>
+<p>看，Client端会首先根据token从mActivities中找到ActivityClientRecord，然后取出AcitivityClientRecord中的Activity，去调用它的onResume方法。</p>
+<h3 id="管理结构的创建时间点"><a href="#管理结构的创建时间点" class="headerlink" title="管理结构的创建时间点"></a>管理结构的创建时间点</h3><p>好的，已经讲完了Activity的管理结构，我们知道在Activity的启动过程中，这个管理结构的类会被依次创建，那么他们是在什么时间点被创建的呢？</p>
+<p>前面分析Activity的时候我没有特别去讲解这个结构的创建，这里就补充一下这个点。我会说每个结构是在哪个方法中被创建的，但是方法是在什么时候调用的， 不清楚的同学可以去查阅Activity启动流程分析。</p>
+<p>ActivityStackSupervisor因为很重要，所以在ActivityManagerService构造函数的时候就创建了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="title">ActivityManagerService</span><span class="params">(Context systemContext)</span> </span>&#123;</div><div class="line">       ...</div><div class="line">       mStackSupervisor = <span class="keyword">new</span> ActivityStackSupervisor(<span class="keyword">this</span>);</div><div class="line">       ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>ActivityRecord是在ActivityStackSupervisor的startActivityLocked中被创建的，如下图</p>
+<p><img src="http://img.blog.csdn.net/20161102175329326" alt="这里写图片描述"></p>
+<p>然后ActivityStack和TaskRecord在同个类的startActivityUncheckedlocked方法中被创建，如下图。</p>
+<p><img src="http://img.blog.csdn.net/20161102175501924" alt="这里写图片描述"></p>
+<p>adjustStackFocus中会创建ActivityStack，但是正如前面说的，只有当mFocusStack没有被创建的时候才会重新创建，如果mFocusStack已经有啦，那么，就用mFocusStack。</p>
+<p>至此，Server端这边的结构都被创建出来了，然后再看Client端的结构。</p>
+<p>ActivityClientRecord是在ActivityThread的scheduleLaunchActivity，如图</p>
+<p><img src="http://img.blog.csdn.net/20161102175850425" alt="这里写图片描述"></p>
+<p>注意，这个时候Activity实例还没有被创建出来。而Activity的创建是在什么点呢。</p>
+<p><img src="http://img.blog.csdn.net/20161102180002769" alt="这里写图片描述"></p>
+<p>在performLaunchActivity中，并且创建完了之后把自己加入到ActivityClientRecord中，然后把ActivityCLientRecord加入到mActivities中。</p>
+<p>至此，所有的管理结构都创建完成，Activity也基本启动完成了。</p>
+<p>例行广告，喜欢这篇文章的朋友可以关注我的博客<a href="http://zwgeek.com">http://zwgeek.com</a></p>
+]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[Activity启动流程番外篇]]></title>
+      <url>http://zwgeek.com/2016/10/26/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E7%95%AA%E5%A4%96%E7%AF%87/</url>
+      <content type="html"><![CDATA[<p>前两篇文章分析了Activity的启动流程的大部分。</p>
+<p>第一篇文章讲了程序在调用startActivity之后发生的一些操作<a href="http://zwgeek.com/2016/10/09/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/">Activity启动流程分析</a></p>
+<p>第二篇文章讲了一个Android程序从最开始启动到一个Activity呈现到用户之间发生的一些操作<a href="http://zwgeek.com/2016/10/25/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%902/">Activity启动流程分析（二）</a></p>
+<p>在这两篇文章之前，我就提出了三个问题，前面也分析的差不多了，准备在这篇文章中来回答这三个问题，所以如果你还没有看前两篇文章，还是希望你能大概读一下之前两篇文章再来看这篇番外篇。</p>
+<p>好，回归正题，提了三个问题，分别是哪三个问题呢。</p>
+<ul>
+<li>getApplication() ，getApplicationContext()，getBaseContext()分别有什么区别？</li>
+<li>单个进程中能存在多个application么？</li>
+<li>为什么不能使用service或者application作为创建dialog的context参数？</li>
+</ul>
+<h4 id="第一个问题"><a href="#第一个问题" class="headerlink" title="第一个问题"></a>第一个问题</h4><p>getApplication() ，getApplicationContext()，getBaseContext()分别有什么区别？</p>
+<p>对于这个问题，我们首先看一下这三个方法返回的对象分别是什么。</p>
+<p>getApplication()<br><img src="http://img.blog.csdn.net/20161026174737355" alt="这里写图片描述"></p>
+<p>getApplication返回的是Activity中的mApplication对象，这个对象是在attach的时候赋给Activity的</p>
+<p><img src="http://img.blog.csdn.net/20161026174850543" alt="这里写图片描述"></p>
+<p>第二篇文章中也讲到了attach的调用是在ActivityThread的performLaunchActivity中，传递的Application是通过makeApplication生成的。</p>
+<p><img src="http://img.blog.csdn.net/20161026175138524" alt="这里写图片描述"></p>
+<p>我们来看下makeApplication</p>
+<p><img src="http://img.blog.csdn.net/20161026175239338" alt="这里写图片描述"></p>
+<p>方法中我们可以发现makeApplication是会返回当前的mApplication的，那当前的这个mApplication到底是不是程序最开始创建的那个Application呢，也就是在bindApplicaiton中生成的Application。</p>
+<p><img src="http://img.blog.csdn.net/20161026175707140" alt="这里写图片描述"></p>
+<p>要看这两个Application是否相同，我们可以跟踪创建它的LoadApk类，也就是这里的data.info和前面的r.packageInfo</p>
+<p>好吧，继续追吧，看看能不能看到这两个对象的源头data.info是在handleBindApplication方法中通过getPackageInfoNoCheck获取到的。</p>
+<p><img src="http://img.blog.csdn.net/20161026180630012" alt="这里写图片描述"></p>
+<p>getPackageInfoNoCheck调用了getPackageInfo方法。看下这个方法</p>
+<p><img src="http://img.blog.csdn.net/20161026180758006" alt="这里写图片描述"></p>
+<p>这里可以很明显的看出，PackageInfo在ActivityThread中是单例的，这个对象跟packageName挂钩，那么我们也知道，一个Android程序的packageName是唯一的。所以基本可以确定前面两个创建Application的packageInfo是一样的，为了保险起见，我们再追一下另外一个packageInfo吧，也就是r.packageInfo。</p>
+<p><img src="http://img.blog.csdn.net/20161026181449946" alt="这里写图片描述"></p>
+<p>看到了吧，也是调用前面的getPackageInfoNoCheck方法获取到的。所以正确流程下，一个Android程序中Application是唯一的，getApplication返回的就是这个对象。为什么说是正常流程下呢，这对应的是我们的第二个问题，后面会做出解答。</p>
+<p>第二个方法getApplicationContext()<br>这个方法是在ContextWrapper中的，Activity是继承在这个类的。</p>
+<p><img src="http://img.blog.csdn.net/20161026181724666" alt="这里写图片描述"></p>
+<p>这里又关系到mBase这个对象，这个对象其实也是在Activity attch的时候绑定进来的，就是图中这个地方创建的appContext，这个对象是ContextImpl类型的。</p>
+<p><img src="http://img.blog.csdn.net/20161026181855572" alt="这里写图片描述"></p>
+<p>我们进去看下它的getApplicationContext方法</p>
+<p><img src="http://img.blog.csdn.net/20161026182021733" alt="这里写图片描述"></p>
+<p>如果packageInfo不为null，那么返回packageInfo的Application，否则返回mainThread的Application</p>
+<p><img src="http://img.blog.csdn.net/20161026182206188" alt="这里写图片描述"></p>
+<p>创建这个ContextImpl的packageInfo其实就是前面分析的r.packageInfo，所以这个ApplicationContext跟前面的Application是完全一样的。如果packageInfo是空，返回的是ActivityThread中的Application，而ActivityThread中的Application是handleBindApplication中生成的那个，跟前面也是一样的。</p>
+<p>综上所述，getApplicationContext跟getApplication是相同的，接下来我们再看下getBaseContext()</p>
+<p><img src="http://img.blog.csdn.net/20161026182544622" alt="这里写图片描述"></p>
+<p>这里返回的就是前面说的mBase，这个mBase是一个ContextImpl类型的对象，是为Activity专门创建的，与Application就不一样了。</p>
+<p>好，这就是第一个问题的答案。</p>
+<h4 id="第二个问题"><a href="#第二个问题" class="headerlink" title="第二个问题"></a>第二个问题</h4><p>单个进程中能存在多个application么？</p>
+<p>忽然意识到第二个问题其实在第一个问题中已经做了部分回答，一个LoadedApk中只能存在一个application。</p>
+<p>但是事实是这样吗，我们来看下ActivityThread中创建Application的地方。正如第一个问题分析的，虽然在第一句话的时候，限制了mApplication的单例性，但是请注意后面对Application的管理。</p>
+<p><img src="http://img.blog.csdn.net/20161031110946531" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161031110409263" alt="这里写图片描述"></p>
+<p>ActivityThread是一个进程，这里很明显我们已经能看出，Android中一个进程是允许存在多个Application的，但是正常情况下，是不会出现多个Application的，那么不正常的情况是什么呢，你可以通过反射得到这个mAllApplications，然后手动把自己的Application放进去。为了什么？当然是一些奇技淫巧了，后面有机会讲到插件化实现的时候会说到。</p>
+<p>反正这里你知道一个结论就行了，一个进程是允许多个Application的，但是Android的正常流程下，一个进程只有一个Application。</p>
+<h4 id="第三个问题"><a href="#第三个问题" class="headerlink" title="第三个问题"></a>第三个问题</h4><p>为什么不能使用service或者application作为创建dialog的context参数？</p>
+<p>用service或者Application启动dialog的时候会报错</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Caused by: android.view.WindowManager$BadTokenException: Unable to add window -- token <span class="keyword">null</span> is not <span class="keyword">for</span> an application</div><div class="line">                           at android.view.ViewRootImpl.setView(ViewRootImpl.java:<span class="number">685</span>)</div><div class="line">                           at android.view.WindowManagerGlobal.addView(WindowManagerGlobal.java:<span class="number">342</span>)</div><div class="line">                           at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:<span class="number">93</span>)</div><div class="line">                           at android.app.Dialog.show(Dialog.java:<span class="number">316</span>)</div></pre></td></tr></table></figure>
+<p>我们来看一下这个错误是哪里报出的，是在ViewRootImpl的setView中</p>
+<p><img src="http://img.blog.csdn.net/20161026184204831" alt="这里写图片描述"></p>
+<p>对res进行判断，而这个res是这句话返回的，既然异常是关于token的，也就是说在addToDisplay的时候对当前view的token进行了检查。</p>
+<p><img src="http://img.blog.csdn.net/20161027112934008" alt="这里写图片描述"></p>
+<p>mWindowSession是一个Session类型的，addToDidplay代码如下</p>
+<p><img src="http://img.blog.csdn.net/20161028150931848" alt="这里写图片描述"></p>
+<p>其实如果你分析的多了，不用看也知道mService肯定是WindowManagerService，这个Service和ActivityManagerService一样，在Framework层是很重要的一个类，负责窗口绘制等。</p>
+<p>异常报出的case是ADD_NOT_APP_TOKEN，找一下</p>
+<p><img src="http://img.blog.csdn.net/20161028151340745" alt="这里写图片描述"></p>
+<p>所以看得出来，报出这个异常有两个条件，一是type是APPLICATION_WINDOW，二是要有APPWindowToken。</p>
+<p>先看看这个TYPE吧</p>
+<p><img src="http://img.blog.csdn.net/20161028151709929" alt="这里写图片描述"></p>
+<p>通过看这个类的注释，大概知道什么意思，WINDOW分为几大类<br>1-99是Application window<br>1000-1999是sub window<br>2000-2999是system window</p>
+<p>挨个来看注释</p>
+<h5 id="Application-Window"><a href="#Application-Window" class="headerlink" title="Application Window"></a>Application Window</h5><p><img src="http://img.blog.csdn.net/20161028152220400" alt="这里写图片描述"></p>
+<p>Application Window就是普通的应用程序window，像Activity，Dialog都属于这一类</p>
+<h5 id="Sub-Window"><a href="#Sub-Window" class="headerlink" title="Sub Window"></a>Sub Window</h5><p><img src="http://img.blog.csdn.net/20161028152438321" alt="这里写图片描述"></p>
+<p>SubWIndow，从注释可以看出，这类window必须有一个可依附的其他Window，然后在坐标轴Z上它是它所依附的Window的下一个，然后它的坐标体系也依附于它所依附的Window的坐标。</p>
+<p>下面指出了一些Sub Window，Panel，media等等。</p>
+<h5 id="SYSTEM-WINDOW"><a href="#SYSTEM-WINDOW" class="headerlink" title="SYSTEM WINDOW"></a>SYSTEM WINDOW</h5><p><img src="http://img.blog.csdn.net/20161028152806777" alt="这里写图片描述"></p>
+<p>注释说这是系统window，一般不是由程序创建的，而在下面它给出的几类中，我们也看到了很多熟悉的身影。</p>
+<p><img src="http://img.blog.csdn.net/20161028152932700" alt="这里写图片描述"></p>
+<p>状态栏，搜索栏，Toast都是SYSTEM WINDOW</p>
+<p>这只是一个小插曲，我们回归正题，那么很明显Dialog应该是一个Application Window，不然它就不会报错了，我们从代码验证一下。</p>
+<p>讲真，我有点打脸，因为我没有找到代码，Dialog的构造函数是这样的。</p>
+<p><img src="http://img.blog.csdn.net/20161028155113014" alt="这里写图片描述"></p>
+<p>创建Window的代码在PolicyManager中，代码如下</p>
+<p><img src="http://img.blog.csdn.net/20161028155158458" alt="这里写图片描述"></p>
+<p>这里感觉有点打脸了，难道代码跟不下去了？网上查了一些资料，看到一个比较合理的解释是，因为我的源码是SDK的源码，而不是真正编译系统的源码，所以这块内容被屏蔽掉了。没关系，万能的百度说正确的代码是下面这个样子的。</p>
+<p><img src="http://img.blog.csdn.net/20161028162358849" alt="这里写图片描述"></p>
+<p>看到了静态区动态加载了Policy，这就好说了，我们去看Policy的makeNewWindow吧。</p>
+<p><img src="http://img.blog.csdn.net/20161028162517980" alt="这里写图片描述"></p>
+<p>返回的是一个PhoneWindow，我没有从代码中找到明确把PhoneWindow设置类型为TYPE_APPLICATION的地方，于是想看一下Window的默认Type是什么。</p>
+<p><img src="http://img.blog.csdn.net/20161028170422891" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161028170435500" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161028170445195" alt="这里写图片描述"></p>
+<p>所以，默认type是TYPE_APPLICATION类型的。PhoneWindow也就是TYPE APPLICATION类型的。</p>
+<p>然后我们再看下一点，Dialog的Token是什么<br>Dialog的Token是null，这个可以从代码上看出来。第二个参数设置的就是token。</p>
+<p><img src="http://img.blog.csdn.net/20161028165305907" alt="这里写图片描述"></p>
+<p>只是如果View的Token是null，WindowManager又会怎么操作呢。我们从异常处反向追一下代码。前面说到了，异常是从WindowManagerService的addWindow方法报出来的，检验的是Token是否是AppToken。</p>
+<p><img src="http://img.blog.csdn.net/20161031102436168" alt="这里写图片描述"></p>
+<p>addWindow的调用链是这样的，我正向来说一下比较好理解，Dialog的show方法时，调用了mWindowManager的addView方法。</p>
+<p><img src="http://img.blog.csdn.net/20161031102800676" alt="这里写图片描述"></p>
+<p>mWindowManager的实现是WindowManagerImpl，调用的是WindowManagerGlobal的addView</p>
+<p><img src="http://img.blog.csdn.net/20161031102949037" alt="这里写图片描述"></p>
+<p>WindowManagerGlobal的addView方法调到了ViewRootImpl的setView</p>
+<p><img src="http://img.blog.csdn.net/20161031103246376" alt="这里写图片描述"></p>
+<p>然后正如前面说到的，setView方法调到了通过WindowSession调用了WindowManagerService的addWindow，检查Token并报出异常。</p>
+<p>这样就很明确了，这个token跟Dialog中的mWindowManager有关，初始化的时候已经看到mWindowManger跟Context有关。</p>
+<p><img src="http://img.blog.csdn.net/20161031103849988" alt="这里写图片描述"></p>
+<p>如果这个Context是Activity，我们看下mWindowManager是如何表现的。在Activity中，如果要获取WindowService，Activity会把自己的mWindowManager返回过去。</p>
+<p><img src="http://img.blog.csdn.net/20161031104032942" alt="这里写图片描述"></p>
+<p>而这个WindowManager的初始化是在Activity的attach方法中，从以下代码中我们看到，这个WIndowManager设置过appToken。</p>
+<p><img src="http://img.blog.csdn.net/20161031104348943" alt="这里写图片描述"></p>
+<p>否则的话，如果Dialog的Context是其他，如Application，因为这几个Context没有重写getSystemService方法，所以调用的是父类ContextWrapper中的getSystemService。</p>
+<p><img src="http://img.blog.csdn.net/20161031104822710" alt="这里写图片描述"></p>
+<p>在第二篇文章<a href="http://zwgeek.com/2016/10/25/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%902/">Activity启动流程分析（二）</a> 中分析过，ContextWrapper中的mBase是ContextImpl类型的。</p>
+<p>ContextImpl中的getSystemtService获取的是SYSTEM_SERVICE_MAP中的Service。</p>
+<p><img src="http://img.blog.csdn.net/20161031105217598" alt="这里写图片描述"></p>
+<p>这个map中的service是在static块中放进去的</p>
+<p><img src="http://img.blog.csdn.net/20161031105401819" alt="这里写图片描述"></p>
+<p>其中也包括Window Service</p>
+<p><img src="http://img.blog.csdn.net/20161031105444244" alt="这里写图片描述"></p>
+<p>这里很简单，就是返回了一个WindowManagerImpl的实例，而我们知道WindowManagerImpl的实例中是没有AppToken的。</p>
+<p>综上所述，只有Activity的WindowManager是设置过AppToken的，所以，只有Context是Activity的时候，才能保证Dialog的show方法不返回异常。</p>
+<p>为什么创建一个Dialog一定要带AppToken呢，其实不是什么技术上有问题，而是android的一种安全措施，原因在注释中也写的很清楚。</p>
+<p><img src="http://img.blog.csdn.net/20161031113058149" alt="这里写图片描述"></p>
+<p>一个TYPE_APPLICATION类型的window必须带APPTOKEN，已区别它显示在哪个窗口上，这就限制了Dialog只能显示在创建它的Activity上，是一种安全措施。</p>
+<p>ok，之前分析文章提出的三个问题已经作答完毕。</p>
+<p>例行广告，喜欢这篇文章的同学可以关注我的博客<a href="http://zwgeek.com">http://zwgeek.com</a></p>
+]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[Activity启动流程分析（二）]]></title>
+      <url>http://zwgeek.com/2016/10/25/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%902/</url>
+      <content type="html"><![CDATA[<p>广告时间，大家喜欢我的文章，可以关注我的博客<a href="http://zwgeek.com">http://zwgeek.com</a></p>
+<p>前面说到，希望分析一下Activity的启动流程，整个过程准备分为三篇文章来写</p>
+<ul>
+<li>程序调用startActivity后发生的操作</li>
+<li>如果被startActivity的程序是需要启动的程序，程序在最开始初始化时发生的操作。例如在Launcher中启动一个程序。</li>
+<li>如果被startActivity的程序是已经启动的程序，发生的操作。例如程序自己调用startActivity启动一个自己程序中的Activity</li>
+</ul>
+<p>第一篇文章也已经讲完了程序调用startActivity之后发生的事情。</p>
+<p>还没有读过的同学可以看这里<a href="http://zwgeek.com/2016/10/09/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/">Activity启动流程分析</a></p>
+<p>这篇文章就来讲第二个部分，一个程序被启动之后发生的事情。第一篇文章中还提到了几个问题，也会在这篇文章中做出解答。</p>
+<ul>
+<li>getApplication() ，getApplicationContext()，getBaseContext()分别有什么区别？</li>
+<li>单个进程中能存在多个application么？</li>
+<li>为什么不能使用service或者application作为创建dialog的context参数？</li>
+</ul>
+<p>第一篇文章最后讲到了Process.start方法，说到了这个方法会启动一个线程，并且运行ActivityThread的main方法来正式开启一个Android程序。所以，很显然，这篇文章就要从ActivityThread的main方法来开始。</p>
+<p>首先，来看一下这个Android程序的起点方法，一睹芳容。</p>
+<p><img src="http://img.blog.csdn.net/20161025184513316" alt="这里写图片描述"></p>
+<p>这个方法重要的是在Looper prepare之后的部分，Handler跟loop的机制比较简单，可以先百度一下，我后面可能也会写篇文章说一下。简单来说loop就是一个无限循环，通过循环去去查询有没有handler发过来命令，如果有就处理，没有就继续循环。</p>
+<p>这样的话，我们就能看出，主进程在做了一个初始化工作之后就把自己放在了一个loop循环中，要跟这个程序打交道，怎么办呢，就是通过获取它的handler，然后发命令，比如现在需要调用onResume方法，通过handler告诉主进程looper要调用onResume，looper就会做相应的处理了。当然这个是关于Android生命周期方法的调用问题，我们也是要单独拉出来讲的，这里就不细说了。</p>
+<p>其实这篇文章的重点是这一句话，thread.attach(false)，ActivityThread的初始化操作。来看下这个方法具体做了什么操作。</p>
+<p><img src="http://img.blog.csdn.net/20161025191248464" alt="这里写图片描述"></p>
+<p>这个方法看下来还好，也都是配置一些监听器，像ViewRoot监听，内存监听，等等。重要的还是我选中的这一段，首先创建了一个ApplicationThread，然后把这个ApplicationThread交给了RuntimeInit，很多人开发过程中最头痛的就是RuntimeException，其实这里就是异常监控的初始化过程。然后创建了一个ActivityManagerNative，第一篇文章中就提过，ActivityManagerNative在创建的时候就会和ActivityManagerService绑定。接下来程序就可以通过AMN来访问AMS了。可是大家有想过，Client可以通过AMN来访问AMS，但是Server端怎么访问Client端呢，看这句话attachApplication，其实这里就是程序把自己的一个控制器交给了Server端，然后Server端就可以通过这个控制器来操作Client端了。不信我们来看下ApplicationThread的方法。</p>
+<p><img src="http://img.blog.csdn.net/20161026103756562" alt="这里写图片描述"></p>
+<p>是不是看到很多控制生命周期的方法，是的，AMS就是通过这个ApplicationThread来控制Client端的。</p>
+<p>那么我们来总结一下这里，程序通过AMN来绑定AMS后，自己创建了一个桥梁applicationThread，然后把这个桥梁交给AMS，意思就是说，这是我小弟，以后联系我可以通过他。另一方面，在这个attach中client的各种初始化已经完成了。接下来的工作就通过attachApplication这个方法移交给AMS端了。</p>
+<p>那接下来我们来看AMS端的attachApplication方法</p>
+<p><img src="http://img.blog.csdn.net/20161026104634204" alt="这里写图片描述"></p>
+<p>AMS端先通过Binder查询到程序的pid，然后调用attachApplicationLocked，继续往下看，这个方法就是AMS在接到“一个新进程启动了”这件事之后做了一些工作，很复杂，但AMS毕竟是老板，多做一些是正常的。</p>
+<p><img src="http://img.blog.csdn.net/20161026110532870" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161026110642120" alt="这里写图片描述"></p>
+<p>先是用一个ProcessRecord来记录所有和Process有关的信息。</p>
+<p><img src="http://img.blog.csdn.net/20161026110745261" alt="这里写图片描述"></p>
+<p>这里有一个generateProvider的操作，但是我感觉应该不是生成程序的ContentProvider，因为此时Manifest文件还没有被解析，这里应该是为Application生成一些系统必要的ContentProvider。至于对不对，后面再验证吧。</p>
+<p>后面做了一些配置工作后，调用了这个方法</p>
+<p><img src="http://img.blog.csdn.net/20161026111207622" alt="这里写图片描述"></p>
+<p>是的，这个方法才是主线剧情。通过这个方法，AMS将自己初始化的一些成果，告诉了Client端，并将控制权重新交回给Client端。在看bindApplication之前，我们看下AMS后面的工作。</p>
+<p><img src="http://img.blog.csdn.net/20161026111410272" alt="这里写图片描述"></p>
+<p>源码的注释写的比较清楚了，判断有没有其他组件在等这个进程启动，如果有，那么这个进程已经启动了，就该通知他们做事了。这不关我们的事，回到正题吧，看看控制权回到Client那边后，又做了什么。不过这里我们也再一次验证了AMS通过ApplicationThread这个类来和Client端打交道。</p>
+<p>好，老板做完事情了，工作又回到小弟手中了。什么？你说老板其实什么都没做，你可以去财务领工资了。</p>
+<p>但是ApplicationThread毕竟是个桥梁，实际的工作还是得给app的老大ActivityThread来做，所以这个bindApplication方法也是记录了一些AMS传回来的信息之后，又把工作给了ActivityThread。</p>
+<p>我们来看下这个bindApplication做了什么，首先记录了一些配置信息</p>
+<p><img src="http://img.blog.csdn.net/20161026112941262" alt="这里写图片描述"></p>
+<p>然后在VM中注册APP的信息</p>
+<p><img src="http://img.blog.csdn.net/20161026113020966" alt="这里写图片描述"></p>
+<p>这里注释也说了，有两种情况，两个package是共享runtime的。</p>
+<ul>
+<li>设置了shareUserId</li>
+<li>设置了ProcessName</li>
+</ul>
+<p>在share的情况下是不用再VM中注册的，我的理解是，share的组件并不是一个完整的app，而他所属的原来的app其实已经注册过了。</p>
+<p>这里有个问题是，工作是怎么给ActivityThread的呢？看bindApplication的第三部分</p>
+<p><img src="http://img.blog.csdn.net/20161026113436006" alt="这里写图片描述"></p>
+<p>ApplicationThread是ActivityThread的内部类，内部类代表什么呢，它其实是持有一个外部类ActivityThread的对象引用的。可以这么说在ApplicationThread中其实是可以调到ActivityThread的所有方法的。那么它为什么要用这种sendMessage，然后通过Handler处理的这种方式呢。我们来想一下Handler的一个作用是什么。切换线程，在任何情况下，不管bindApplication这个方法运行在哪个线程中，只要通过handler这种方式，都可以回到ActivityThread所在的线程，也就是主线程。这就保证了什么呢，保证了Android的所有生命周期方法都是运行在主线程的，也就是我们常说的UI线程。</p>
+<p>简单跟下sendMessage</p>
+<p><img src="http://img.blog.csdn.net/20161026125950474" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161026130023435" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161026130056888" alt="这里写图片描述"></p>
+<p>mH是一个H类型的对象，这个H就是ActivityThread内部的Handler</p>
+<p><img src="http://img.blog.csdn.net/20161026130144586" alt="这里写图片描述"></p>
+<p>看下这个Handler的handleMessage方法，跟下对BIND_APPLICATION消息的处理。</p>
+<p><img src="http://img.blog.csdn.net/20161026130314369" alt="这里写图片描述"></p>
+<p>进到了handleBIndApplication方法，这里就是Application的启动过程了，让我们来仔细看下这个方法处理的步骤</p>
+<p><img src="http://img.blog.csdn.net/20161026133403057" alt="这里写图片描述"></p>
+<p>国际惯例，前面也是各种记录，配置，初始化的工作，我们可以完全忽略。</p>
+<p><img src="http://img.blog.csdn.net/20161026133429604" alt="这里写图片描述"></p>
+<p>这个地方是一个小的知识点，在3.1以前的版本上，AsyncTask会改变默认的executor，我们看下改变之后的executor是什么样的。</p>
+<p><img src="http://img.blog.csdn.net/20161026133859665" alt="这里写图片描述"></p>
+<p>而默认的executor是这样的</p>
+<p><img src="http://img.blog.csdn.net/20161026133929525" alt="这里写图片描述"></p>
+<p>所以3.1以前版本的AsyncTask是并行执行任务的，而3.1以后版本反而是顺序执行任务的，当然，这个配置可以通过AsyncTask的参数而改变。</p>
+<p>然后我们回到handleBindApplication，后面会继续设置时区，位置，屏幕参数等。</p>
+<p><img src="http://img.blog.csdn.net/20161026134148091" alt="这里写图片描述"></p>
+<p>之后创建了一个Context对象，注意，这是我们到目前位置接触到的第一个Context。我们知道在Android中Application，Activity等等其实都是Context的子类，但是他们又是不同的。这里创建的这个context对应的是我们开发过程中的哪个呢，让我们继续往下看。</p>
+<p><img src="http://img.blog.csdn.net/20161026134554910" alt="这里写图片描述"></p>
+<p>然后又是一堆配置，其中包括UI线程不能执行网络操作的配置</p>
+<p><img src="http://img.blog.csdn.net/20161026134728344" alt="这里写图片描述"></p>
+<p>然后是关于调试的相关配置，开启一个调试端口，其实关于调试也是需要讲很多的，调试本身也是C/S结构的，客户端开一个端口，等着服务端来连接进行调试，这里就是客户端打开端口的操作。</p>
+<p><img src="http://img.blog.csdn.net/20161026134924665" alt="这里写图片描述"></p>
+<p>设置了一个默认的HTTP代理</p>
+<p><img src="http://img.blog.csdn.net/20161026135017838" alt="这里写图片描述"></p>
+<p>后面一段是创建了一个Instrumentation对象，这里不截图的。之前第一篇文章我们也提到过，跟ActivityStart有关的操作都是由Instrumentation这个类管理的，被我们亲切的称为大管家，其实是为了监视我们的操作。。。</p>
+<p>然后，这个方法讲了这么多，前面大家基本可以忽略，到现在才是重点。</p>
+<p><img src="http://img.blog.csdn.net/20161026135315421" alt="这里写图片描述"></p>
+<p>这一段，首先创建了一个Application，恩，我们开发过程中遇见的Application就是这里生成的。后面一段是初始化ContentProvider，这个我们后面讲ContentProvider启动过程的时候会看到，不过这里能知道的一个点就是ContentProvider的启动时间是相当早的，在Application的onCreate之前。然后这里的providers确实是之前我们说到的AMS生成的，然后一路传过来的。恩，先不细看了，因为这篇文章主要想说Activity的启动过程。</p>
+<p>后面调用了Instrumentation的onCreate方法，是个空方法，可Override，再后面看到吗，通过Instrumentation大管家呼叫了Application的OnCreate方法</p>
+<p><img src="http://img.blog.csdn.net/20161026135758475" alt="这里写图片描述"></p>
+<p>至此，我们开发者接触到的Android生命周期中的第一个方法，Application的onCreate被执行了。至于前面生成的Context，我看了一下，传给了Instrumentation成为了Instrumentation中的appContext，但是我并没有找到跟Application对象结合的方法。这个继续往后看吧。</p>
+<p>到此为止，这个handleBindApplication方法就结束了，创建了一个appContext，一个Instrumentation，一个Application，并且调用了Application的onCreate。中间还涉及到ContentProvider的初始化操作，我们先忽略。那么Activity在哪里，为什么感觉自己被带偏了。我又一路往前找。终于在AMS的attachApplicationLocked中，我看到了这一步。</p>
+<p><img src="http://img.blog.csdn.net/20161026141040256" alt="这里写图片描述"></p>
+<p>bindApplication在执行完我们上面说的那一堆之后，调用了StackSupervisor的attachApplicationLocked，好，我们来看一下。同时，这里的调用顺序也保证了Application的onCreate方法在Activity之前进行。</p>
+<p><img src="http://img.blog.csdn.net/20161026141633514" alt="这里写图片描述"></p>
+<p>方法中有一个realStartActivity的方法，名字很形象，前面我们调用过那么多次的startActivity，但是真正的Activity在这里才生成。</p>
+<p>这个realStartActivity嘟噜嘟噜的扯了好多，不知道在干吗，但是终于看到了一个熟悉的影子</p>
+<p><img src="http://img.blog.csdn.net/20161026150656396" alt="这里写图片描述"></p>
+<p>就这样控制权又回到了ActivityThread</p>
+<p><img src="http://img.blog.csdn.net/20161026151007131" alt="这里写图片描述"></p>
+<p>这里先创建了一个ActivityClientRecord，这个就是Client端管理生成的activity对象的包装类，后面生成的Activity类都会被ActivityClientRecord包装一层，然后保存到ActivityThread的mActivities中。</p>
+<p><img src="http://img.blog.csdn.net/20161026151225913" alt="这里写图片描述"></p>
+<p>跟Application那边一样，scheduleLaunchActivity最终会被handleLaunchActivity处理，我们略过中间过程，直接看handleLaunchActivity吧。</p>
+<p><img src="http://img.blog.csdn.net/20161026151527821" alt="这里写图片描述"></p>
+<p>这个方法触发了Activity的两个生命周期方法，分别是我标出来的onCreate的onResume，然后后面那一段我的理解是Activity被创建出来，并且调用了onResume之后并没有被显示，那么就立刻调用onPause，但其实不是很懂这个地方。让我想想再回来补充吧。</p>
+<p>接下来看performLaunchActivity吧</p>
+<p><img src="http://img.blog.csdn.net/20161026152020367" alt="这里写图片描述"></p>
+<p>首先更新了ActivityClientRecord的信息，包括ActivityInfo，ComponentName等，我们开发过程中也是经常用到，这些信息都是存在ActivityClientRecord中的。</p>
+<p><img src="http://img.blog.csdn.net/20161026152153386" alt="这里写图片描述"></p>
+<p>接下来创建了一个Activity，天哪，我们分析了这么久，终于看到Activity了。创建过程很简单，通过反射new了一个类出来，这个时候的Activity是还没有生命周期的。需要把Activity托管给AMS，才能有生命周期。</p>
+<p><img src="http://img.blog.csdn.net/20161026152429639" alt="这里写图片描述"></p>
+<p>接着，我们获取到之前创建的那个Application，为Activity创建了一个Context，然后通过Activity的attach方法把这些绑定起来。</p>
+<p><img src="http://img.blog.csdn.net/20161026152636325" alt="这里写图片描述"></p>
+<p>生成Context的方法和之前为Instrumentation生成Context的方法差不多，返回的是一个ContextImpl类型的对象，保存了Activity的上下文。</p>
+<p><img src="http://img.blog.csdn.net/20161026152944396" alt="这里写图片描述"></p>
+<p>attach方法将所有的对象包括Instrumentation，Application, ActivityThread等等全部在Activity中保存了一份。</p>
+<p><img src="http://img.blog.csdn.net/20161026153551690" alt="这里写图片描述"></p>
+<p>回到performLaunchActivity，attach之后通过Instrumentation大管家调用了Activity的onCreate方法</p>
+<p><img src="http://img.blog.csdn.net/20161026154101442" alt="这里写图片描述"></p>
+<p>然后将生成的activity交给ActivityClientRecord，并保存在mActivities中，这就完成了Activity的生成，并托管给系统，之后系统都可以在适当的时候通过token来获取到相应的Activity，并调用其生命周期。</p>
+<p>这样performLaunchActivity就结束了，我们返回上一层handleLaunchActivity继续往下看，Activity在生成之后是会立刻调用onResume的。这两个生命周期有什么区别呢， 其实就在于onCreate跟onResume之间执行的这几句话，说实话，在创建的时候区别不大。不同的是onResume未来还会被调用，但是onCreate只有创建的时候才会被调用。</p>
+<p><img src="http://img.blog.csdn.net/20161026154453198" alt="这里写图片描述"></p>
+<p>其实到这来一个Activity的启动流程就已经结束了，但是我们顺便来看下handleResumeActivity的工作吧</p>
+<p><img src="http://img.blog.csdn.net/20161026154706405" alt="这里写图片描述"></p>
+<p>看这来，从mActivities中根据token获取了ActivityClientRecord，并进一步获得了里面的activity，然后执行了onResume方法，我刚想说，咦，这次调用没有通过大管家哎，然后看了一下performResume方法里面，其实还是通过Instrumentation调用的。</p>
+<p><img src="http://img.blog.csdn.net/20161026154913320" alt="这里写图片描述"></p>
+<p>然后，还更新了ActivityClientRecord的相关信息等。</p>
+<p>其实到这里onResume已经调用完成了，那么handleResumeActivity后面的这一堆在干什么呢？</p>
+<p><img src="http://img.blog.csdn.net/20161026155148379" alt="这里写图片描述"></p>
+<p>通过方法名我们知道，Activity在onResume之后才开始处理显示的逻辑，这里就是通知AMS，Activity onResume已经调用完了，接下来要显示了，那么AMS就会通知WindowManger来显示Activity，这就是另外一件事了，我们在这里就不细细讨论了。</p>
+<p>呼~终于写完了，整个流程主线还是很清楚的，AMS和AMN的分工明确。 </p>
+<p>整个流程总结一下，是下面这种关系</p>
+<p><img src="http://img.blog.csdn.net/20161026165138600" alt="这里写图片描述"></p>
+<p>最后还是广告时间，如果喜欢这篇文章，可以关注我的博客<a href="http://zwgeek.com">http://zwgeek.com</a></p>
+]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[Android NDK 使用简介]]></title>
+      <url>http://zwgeek.com/2016/10/11/AndroidNDK%E4%BD%BF%E7%94%A8%E7%AE%80%E4%BB%8B/</url>
+      <content type="html"><![CDATA[<p>今天我们来简单说一下Android NDK的使用方法。众所周知，so文件在Android的开发过程中起到了很重要的作用，无论与底层设备打交道还是在Android安全领域。so文件都格外受人青睐。NDK就是Android发布的用于编译so文件的一套工具，</p>
+<p>引用自百度百科的一段解释</p>
+<blockquote>
+<p>Android NDK 是在SDK前面又加上了“原生”二字，即Native Development Kit，因此又被Google称为“NDK”。</p>
+<p>众所周知，Android程序运行在Dalvik虚拟机中，NDK允许用户使用类似C / C++之类的原生代码语言执行部分程序。<br>NDK包括了：</p>
+<ul>
+<li>从C / C++生成原生代码库所需要的工具和build files。</li>
+<li>将一致的原生库嵌入可以在Android设备上部署的应用程序包文件（application packages files ，即.apk文件）中。</li>
+<li>支持所有未来Android平台的一系列原生系统头文件和库</li>
+</ul>
+<p>为何要用到NDK?<br>概括来说主要分为以下几种情况：</p>
+<ol>
+<li>代码的保护，由于apk的java层代码很容易被反编译，而C/C++库反汇难度较大。</li>
+<li>在NDK中调用第三方C/C++库，因为大部分的开源库都是用C/C++代码编写的。</li>
+<li>便于移植，用C/C++写的库可以方便在其他的嵌入式平台上再次使用。</li>
+</ol>
+</blockquote>
+<p>本文从以下三个方面讲解NDK的使用</p>
+<ul>
+<li>直接在命令行中用NDK进行编译</li>
+<li>Android Studio2.2以前对NDK的支持</li>
+<li>Android Studio2.2及以后对NDK的支持</li>
+</ul>
+<h3 id="直接在命令行使用NDK"><a href="#直接在命令行使用NDK" class="headerlink" title="直接在命令行使用NDK"></a>直接在命令行使用NDK</h3><p>NDK本来就是一套编译工具，自然是在命令行中执行，其实后面两种方法都是对这种方法的自动化处理，万变不离其宗， 要理解后面两种方法，还是应该熟悉一下不借助任何工具时的操作。</p>
+<p>SDK默认是不带NDK的，所以NDK需要额外下载，下载后还需要配置环境变量。具体方法可以查看百度，配置环境变量很简单，只需要把NDK根目录，也就是ndk-build所在的目录加入环境变量即可。</p>
+<p>用NDK-BUILD构建一个NDK程序，我们知道就是将C文件编译成so文件，其实原理很简单，用gcc进行编译。哦，因为我是mac环境，所以自带GCC编译环境，如果是windows下的话，还需要安装Cygwin环境来模拟linux，不过听说最新的NDK自带Cygwin，所以不再需要额外安装，Windows的同学可以试一下，有问题可以在评论区提问， 有机会我会补充Win下的使用方法。</p>
+<p>编译c程序需要makefile，其实简单说就是告诉GCC怎么编译，先编什么在编什么，需要哪些包等等。这个熟悉c的同学应该知道的。一个简单的so项目包含以下四个文件。</p>
+<p><img src="http://img.blog.csdn.net/20161011175730810" alt="这里写图片描述"></p>
+<p>除了.h和.c文件，还有两个makefile，Application.mk是项目makefile，它会指定调用哪个子makefile，然后Android.mk是具体执行操作的makefile。Application.mk的名字不能变，因为NDK会默认去找这个文件，后面也会讲到，Android.mk的名字可以变，是配置在Application.mk中的。</p>
+<p>然后NDK还有一些规定，看.h文件的名字，c文件中的方法与java中某个方法是一一对应的，出于安全考量，NDK要求C中的方法名应该以对应java文件的包名+类名+方法名来命名。</p>
+<p>头文件</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* DO NOT EDIT THIS FILE - it is machine generated */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;jni.h&gt;</span></span></div><div class="line"><span class="comment">/* Header for class com_example_zzw_helloworld_JniUtils */</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> _Included_com_example_zzw_helloworld_JniUtils</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> _Included_com_example_zzw_helloworld_JniUtils</span></div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> __cplusplus</span></div><div class="line"><span class="keyword">extern</span> <span class="string">"C"</span> &#123;</div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line"><span class="comment">/*</span></div><div class="line"> * Class:     com_example_zzw_helloworld_JniUtils</div><div class="line"> * Method:    stringFromJNI</div><div class="line"> * Signature: ()Ljava/lang/String;</div><div class="line"> */</div><div class="line"><span class="function">JNIEXPORT jstring JNICALL <span class="title">Java_com_example_zzw_helloworld_JniUtils_stringFromJNI</span></span></div><div class="line">  <span class="params">(JNIEnv *, jobject)</span>;</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> __cplusplus</span></div><div class="line">&#125;</div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div></pre></td></tr></table></figure>
+<p> 这个头文件很简单，就声明了一个方法，这两个参数是固定的，这个方法在java中的表现形式为</p>
+<pre><code>stringFromJNI() 
+</code></pre><p>返回类型对应的是java中的string。然后创建C文件，实现该方法。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//</span></div><div class="line"><span class="comment">// Created by zzw on 16/10/11.</span></div><div class="line"><span class="comment">//</span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"com_example_zzw_helloworld_JniUtils.h"</span></span></div><div class="line"></div><div class="line"><span class="function">JNIEXPORT jstring JNICALL <span class="title">Java_com_example_zzw_helloworld_JniUtils_stringFromJNI</span></span></div><div class="line">        <span class="params">(JNIEnv *env, jobject instance)</span> &#123;</div><div class="line">    <span class="keyword">return</span> (*env)-&gt;NewStringUTF(env, <span class="string">"Hello from JNI !"</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>然后我们还需要两个make文件，一个是Application.mk另一个是Android.mk<br>Application.mk内容如下：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">APP_BUILD_SCRIPT := /Users/zzw/Desktop/jni/Android.mk</div></pre></td></tr></table></figure>
+<p>其实就是声明Android.mk的位置<br>Android.mk如下：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">LOCAL_PATH := <span class="variable">$(call my-dir)</span></div><div class="line"></div><div class="line">include $(CLEAR_VARS)</div><div class="line"></div><div class="line">LOCAL_MODULE    := hello-jni</div><div class="line">LOCAL_SRC_FILES := hello-jni.c</div><div class="line"></div><div class="line">include $(BUILD_SHARED_LIBRARY)</div></pre></td></tr></table></figure>
+<p>然后运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./ndk-build NDK_PROJECT_PATH=/Users/zzw/Desktop</div></pre></td></tr></table></figure>
+<p>指定PROJECT的位置，然后NDK会自动寻找该路径下的jni文件夹中的Application.mk，然后去编译。</p>
+<p>如果编译成功，则会在该文件夹下生成libs文件夹，里面就是各种架构下的so文件<br><img src="http://img.blog.csdn.net/20161011181217255" alt="这里写图片描述"></p>
+<p>生成的文件放在Android的libs中，对应的java文件调用方法为</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> com.example.zzw.helloworld;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Created by zzw on 16/10/11.</div><div class="line"> */</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JniUtils</span> </span>&#123;</div><div class="line">    <span class="keyword">static</span> &#123;</div><div class="line">        System.loadLibrary(<span class="string">"hello-jni"</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">native</span> String <span class="title">stringFromJNI</span><span class="params">()</span></span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">stringFromJNINative</span><span class="params">()</span></span>&#123;</div><div class="line">        <span class="keyword">return</span> stringFromJNI();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>先用loadLibrary引入so文件，然后用native声明底层方法，然后我们就可以在程序中调用方法了。</p>
+<p>这种方法完全没有借助任何的IDE，不过你也能看出来，有些工作是可以简化的，下面我们就说下在IDE中的做法。</p>
+<h3 id="Android-Studio2-2-之前使用NDK"><a href="#Android-Studio2-2-之前使用NDK" class="headerlink" title="Android Studio2.2 之前使用NDK"></a>Android Studio2.2 之前使用NDK</h3><p>老的Android Studio支持NDK的方式可以根据java类帮我们生成头文件，然后编译过程可以写在gradle中，而不需要先编出so，再编android这样，具体过程如下</p>
+<p>先写一个Java类，因为我们可以用jni工具根据java类来生成头文件，java类载入so文件并且声明底层方法，这个和前面一样，如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> com.example.zzw.helloworld;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Created by zzw on 16/10/11.</div><div class="line"> */</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JniUtils</span> </span>&#123;</div><div class="line">    <span class="keyword">static</span> &#123;</div><div class="line">        System.loadLibrary(<span class="string">"hello-jni"</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">native</span> String <span class="title">stringFromJNI</span><span class="params">()</span></span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">stringFromJNINative</span><span class="params">()</span></span>&#123;</div><div class="line">        <span class="keyword">return</span> stringFromJNI();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>然后编译程序，注意只编译不运行，因为此时运行会报错，编译后，在build的文件夹下面能看到这个class文件</p>
+<p><img src="http://img.blog.csdn.net/20161011181737161" alt="这里写图片描述"></p>
+<p>接下来我们可以用jni工具来根据这个class文件自动生成头文件了。命令行cd到build文件夹一层，然后执行如下命令</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">cd</span> app/build/intermediates/classes/debug/</div><div class="line">javah -jni com.example.zzw.helloworld.JniUtils</div></pre></td></tr></table></figure>
+<p>完整路径的类名，如果这一步报错，可以检查一下NDK有没有配到环境变量里。方法可以自行百度。</p>
+<p>如果成功的话，你应该能看到在build文件夹下生成了一个.h文件，如下</p>
+<p><img src="http://img.blog.csdn.net/20161011181815929" alt="这里写图片描述"></p>
+<p>把这个文件拷贝到main下面jni文件夹下，这个文件夹也不是固定的，可以配置。但是我们一般习惯于放在这个地方。</p>
+<p>复制过来之后这就是我们的头文件，然后我们可以创建一个c文件，实现头文件的方法</p>
+<p>文件内容如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"com_example_zzw_helloworld_JniUtils.h"</span></span></div><div class="line"></div><div class="line"><span class="function">JNIEXPORT jstring JNICALL <span class="title">Java_com_example_zzw_helloworld_JniUtils_stringFromJNI</span></span></div><div class="line">        <span class="params">(JNIEnv *env, jobject instance)</span> &#123;</div><div class="line">    <span class="keyword">return</span> (*env)-&gt;NewStringUTF(env, <span class="string">"Hello from JNI !"</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>build.gradle中需要配置ndk<br><img src="http://img.blog.csdn.net/20161011182053587" alt="这里写图片描述"></p>
+<p>然后点击运行。</p>
+<p>遇到的问题，<br>报错</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Error:Execution failed for task &apos;:app:compileDebugNdk&apos;.</div><div class="line">&gt; Error: NDK integration is deprecated in the current plugin.  Consider trying the new experimental plugin.  For details, see http://tools.android.com/tech-docs/new-build-system/gradle-experimental.  Set &quot;$USE_DEPRECATED_NDK=true&quot; in gradle.properties to continue using the current NDK integration.</div></pre></td></tr></table></figure>
+<p>这是因为gradle插件版本太高，已经不支持这个方法了，它提示我们在gradle.properties里面加一句话，但经过我测试，那句话是不对的，应该加如下一句：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">android.useDeprecatedNdk=true</div></pre></td></tr></table></figure>
+<p>然后运行，正常。</p>
+<h3 id="Android-Studio2-2之后使用NDK"><a href="#Android-Studio2-2之后使用NDK" class="headerlink" title="Android Studio2.2之后使用NDK"></a>Android Studio2.2之后使用NDK</h3><p>前面我们看到其实比起第一种方法也没有简化多少，所以在Studio2.2的时候google又尝试简化了做法，Android Studio 2.2开始支持用內建的方法来执行复杂的NDK编译，这意味着开发者只需要写好c文件，其他所有的编译，链接都可以交给系统去做。</p>
+<p><em>注意：gradle版本需要2.2及以上</em></p>
+<p>这个特性的实现要依赖于一个build标签，叫externalNativeBuild。标签配置如下</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">defaultConfig &#123;</div><div class="line">    externalNativeBuild &#123;</div><div class="line">        ndkBuild &#123;</div><div class="line">            arguments "NDK_LIBS_OUT=$jniLibsDir", "-j$numProcs", "all"</div><div class="line">            abiFilters "armeabi-v7a"</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line">externalNativeBuild&#123;</div><div class="line">    ndkBuild&#123;</div><div class="line">        path "src/main/jni/Android.mk"</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p> arguments指定编译的参数，abiFilters指定编译的平台，这些参数都可以省略以使用默认参数。下面path指定make文件的位置。</p>
+<p>之后，NDK执行的task配置如下</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">task ndkBuild(type: Exec) &#123;</div><div class="line">    commandLine getNdkBuildCmd(),</div><div class="line">            '-C', file('src/main/jni').absolutePath,</div><div class="line">            '-j', Runtime.runtime.availableProcessors(),</div><div class="line">            "NDK_LIBS_OUT=$jniLibsDir",</div><div class="line">            'all',</div><div class="line">            'NDK_DEBUG=1'</div><div class="line"></div><div class="line">    dependsOn 'generateLuaBytecodes'</div><div class="line"></div><div class="line">    doFirst &#123;</div><div class="line">        println '== ndkBuild =='</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接下来让我们来看一下，具体的实现步骤是什么样的，不需要像以前一样自己写头文件，然后再编译，现在只需要关注c文件即可。以hello world为例，我们写一个C文件如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;jni.h&gt;</span></span></div><div class="line"></div><div class="line"></div><div class="line"><span class="function">JNIEXPORT jstring JNICALL</span></div><div class="line"><span class="title">Java_com_example_zzw_helloworld_MainActivity_stringFromJNI</span><span class="params">(JNIEnv *env, jobject instance)</span> &#123;</div><div class="line">    <span class="keyword">return</span> (*env)-&gt;NewStringUTF(env, <span class="string">"Hello from JNI !"</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>注意方法名要以调用它的JAVA文件的包名+类名+方法名命名。<br>这样写完之后，我们就可以在相应的JAVA文件中调用了，代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> com.example.zzw.helloworld;</div><div class="line"></div><div class="line"><span class="keyword">import</span> android.os.Bundle;</div><div class="line"><span class="keyword">import</span> android.support.v7.app.AppCompatActivity;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">    <span class="keyword">static</span> &#123;</div><div class="line">        System.loadLibrary(<span class="string">"hello-jni"</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">native</span> String <span class="title">stringFromJNI</span><span class="params">()</span></span>;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</div><div class="line">        setContentView(R.layout.activity_main);</div><div class="line">        System.out.println(stringFromJNI());</div><div class="line"></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>先用loadLibrary引入so文件，然后用native声明底层方法，然后我们就可以在程序中调用方法了。<br>当然前面提到了make文件，我们要创建一个Android.mk文件在externalNativeBuild中声明的位置，如下：</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">LOCAL_PATH := <span class="variable">$(call my-dir)</span></div><div class="line"></div><div class="line">include $(CLEAR_VARS)</div><div class="line"></div><div class="line">LOCAL_MODULE    := hello-jni</div><div class="line">LOCAL_SRC_FILES := hello-jni.c</div><div class="line"></div><div class="line">include $(BUILD_SHARED_LIBRARY)</div></pre></td></tr></table></figure>
+<p>之后，make project，运行程序应该就能看的效果了，通过这种方法生成的so文件放在app/.externalNativeBuild/debug/obj/local/下，并以lib+类名命名文件，如下：</p>
+<p><img src="http://img.blog.csdn.net/20161011182623870" alt="这里写图片描述"></p>
+<p> 感觉现在应该很简单了，只需要关注方法实现就可以了，其他基本都不要开发者关心了。</p>
+]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[Activity启动流程分析]]></title>
+      <url>http://zwgeek.com/2016/10/09/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/</url>
+      <content type="html"><![CDATA[<p>广告时间，大家喜欢我的文章，可以关注我的博客<a href="zwgeek.com">zwgeek.com</a></p>
+<p>今天想和大家一起分享一下Activity的启动流程。这起源于我发现了一个好的现象，其实不知道大家发现没有，随着Android的发展，这几年Android开发者的素质也越来越高，我说的素质指的是对问题深度的理解，对Android总体的运行原理的分析，而不仅仅局限在应用开发层面了。还记得最开始接触Android的时候，那时候不管面试还是干嘛的，上来就问你生命周期，生命周期。感觉能说清楚生命周期已经是一件很厉害的事了。我也曾一度觉得开发者只要清楚onCreate什么时候调用就可以了，onCreate就是开发者能接触的最上层的内容了。根本没有考虑过程序应该有个入口，onCreate到底是怎么被调用的，更不用说还想着去看看源码。而现在，好像大家比起关心生命周期，关心起了更深层的问题，也就是一个Android程序是怎么被启动的，然后才是它的生命周期是怎么被调用的。我最先意识到这个现象时，是很开心的，这说明Android开发者越来越高级，也就意味着现在开发者不光使用Android，而且也能为Android社区做一些力所能及的贡献了。</p>
+<p>这篇文章的目标是总结网上各种对Activity启动流程的分析。现在网上对Activity启动流程的分析已经多如牛毛了。那么我为什么还觉得有必要再写一次呢。一是自己边分析边写更有利于理解。二是我发现网上的分析习惯性的忽略细节，只着眼于一条大的主线，也不是说这样不好，这样确实比较容易理解，我希望我这篇文章能关注到每个细节点，每个方法的作用。</p>
+<p>整个过程准备分为三篇文章来写</p>
+<ul>
+<li>程序调用startActivity后发生的操作，也就是这篇文章。</li>
+<li>如果被startActivity的程序是需要重新启动的程序，程序在最开始初始化时发生的操作。例如在Launcher中启动一个程序或启动另外的程序。已经完成，可查阅<a href="http://zwgeek.com/2016/10/25/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%902/">Activity启动流程分析（二）</a></li>
+<li>如果被startActivity的程序是已经启动的程序，发生的操作。例如程序自己调用startActivity启动一个自己程序中的Activity</li>
+</ul>
+<p>整个分析过程中，希望读者带着这样一些问题</p>
+<ul>
+<li>getApplication() ，getApplicationContext()，getBaseContext()分别有什么区别？</li>
+<li>单个进程中能存在多个application么？</li>
+<li>为什么不能使用service或者application作为创建dialog的context参数？</li>
+</ul>
+<p>讲了这么多，我们可以看代码吧，从哪里开始看呢，就从Activity的startActivity方法作为起点吧。也就是这个方法</p>
+<p><img src="http://img.blog.csdn.net/20161009143617855" alt="这里写图片描述"><br>Bundle为空的情况，又调用了带Bundle的同名方法，bundle传null，如下</p>
+<p><img src="http://img.blog.csdn.net/20161009143857577" alt="这里写图片描述"></p>
+<p>startActivity方法本质其实是调用startActivityForResult的，requestCode传了-1，这个倒是我之前没想到的，一直以为这两个方法是分开的。所以requestCode为-1的情况应该是被系统默认忽略的（后面的分析过程中也发现requestCode为负都是被忽略的）。startActivityForResult的两个方法跟startActivity一样，最终也是进到了带Bundle的方法。</p>
+<p>这里先看下这个方法的注释<br><img src="http://img.blog.csdn.net/20161009145144243" alt="这里写图片描述"></p>
+<ul>
+<li>requestCode为负数时无效，跟调startActivity一样</li>
+<li>这个方法仅仅试用于能够在当前Task（关于Task是什么，后面也会讲到，暂时可以考虑成是一个Activity的集合）启动的Activity，只有在这个集合中的Activity才能互相传递Result，如果Activity不能在当前Task启动，则这个方法会立即返回失败</li>
+<li>在onCreate和onResume中调用startActivity时，前一个Activiyt不会显示，直到后面启动的Activity关闭返回结果，这是为了防止前一个Activity显示造成的闪烁</li>
+<li>方法会抛出一个ActivityNotFoundException</li>
+</ul>
+<p><img src="http://img.blog.csdn.net/20161009152006663" alt="这里写图片描述"></p>
+<p>这个方法一共有两种情况，mParent为null和不为null，mParent其实是指的ActivityGroup，但是这种用法现在已经被弃用了，所以这条线可以不用关注。无伤大雅，我们顺便来看一下吧。</p>
+<p>先看一下下个启动过程，当mParent不为null的时候，直接调用mParent的startActivityFromChild方法，如下<br><img src="http://img.blog.csdn.net/20161009153000134" alt="这里写图片描述"></p>
+<p>在startActivityFromChild中又通过mInstrumentation调用了其中的execStartActivity方法。</p>
+<p>在继续之前，有两个小插曲，先说一下startActivityForResult的最后一步，mActivityTransitionState.startExitOutTransition方法，处理退出当前Activity的相关事宜，这个不太用关注。</p>
+<p>然后是mInstrumentation，看过网上文章的同学应该熟悉Instrumentation这个类，Instrumentation这个类是一个管家类，所有跟Activity有关的实际操作都交给它做，恩，与其说大管家，不如说是打杂的。这样有什么好处呢，这个类可以做一些统计工作，因为它知道Activity有关的所有事情。</p>
+<p>然后，我们继续，回过头来看mParent为null时候的调用，其实也是调用了mInstrumentation的execStartActivity方法。可以看出，这两个分支最后殊途同归，到了execStartActivity方法，只是有两个参数不同，这就值得我们去看下这两个参数有什么影响，第一个和第四个，两个Activity类型的参数。其实这里mToken也是不一样的，mToken相当于activity的唯一标识符，这个token关系到后面新创建的Activity加入到哪个task栈中。这三个参数体会一下，后面也会遇到一些关于Activity的问题基本都和这里传递的参数有关。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (mParent == <span class="keyword">null</span>)</div><div class="line">mInstrumentation.execStartActivity(<span class="keyword">this</span>, mMainThread.getApplicationThread(), mToken, <span class="keyword">this</span>,</div><div class="line">                    intent, requestCode, options);</div></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span>(mParent != <span class="keyword">null</span>)</div><div class="line">mInstrumentation.execStartActivity(<span class="keyword">this</span>, mMainThread.getApplicationThread(), mToken, child,</div><div class="line">                intent, requestCode, options);</div></pre></td></tr></table></figure>
+<p>这里先调用mInstrumentation的execStartActivity方法，返回一个ActivityResult。如果ActivityResult不为空，调用mMainThread的sendActivityResult方法。这其实是关于Activity通过startActivityForResult启动Activity然后返回Result的过程，这部分准备单独拉一篇文章来讲，这里就不多说了。</p>
+<p>然后mMainThread是一个ActivityThread类型的，说起ActivityThread可厉害了，这个类其实就是应用程序的入口，main方法就在这个类里，我们的第二篇文章就主要是对这个类的分析。</p>
+<p>然后这里mMainThread.sendActivityResult方法的作用就是调用onActivityResult，其实看到这里我不太明白，onActivityResult应该是新启动的Activity关闭后才调用。为什么这里execStartActivity之后就调用了，道理上这里Activity才启动，并没有关闭啊。我能想到的原因之一是execStartActivity是一个阻塞方法，只有当Activity关闭之后才会返回结果，然后继续往下执行，不知道我想的对不对，后面分析验证。</p>
+<p>关于sendActivityResult是怎么调到onActivityResult的，和所有生命周期方法的调用一样，通过Handler，这个后面会统一讲一下。</p>
+<p>下面我们去看Instrumentation的execStartActivity方法了。例行先看一下注释<br><img src="http://img.blog.csdn.net/20161009162711191" alt="这里写图片描述"></p>
+<p>这个方法执行一个有应用程序发出的startActivity的请求，默认的实现会更新所有ActivityMonitor的信息，你可以用这个类监控activity的启动情况，并且做一些额外操作，这也是前面提到的可以在Instrumentation中监控每个Activity的启动情况。</p>
+<p>当ActivityMonitor想要中断Activity启动时，这个方法依然会返回一个正确的ActivityResult。结合下面的代码，我前面提到的那个问题就明白了，这个方法并不阻塞，而且正常流程情况下也不会返回result，触发onActivityResult。只有当你设置了一个监控器，并且监控器是想阻止这个Acitivity启动的时候，这个方法不会真正去启动一个Activity，但是还是会正常返回Result值。</p>
+<p>另外前面也提到，有两个参数要重点看下，第一个参数Context，是正在启动的Activity属于哪个Context，这个参数永远都是Parent，当没有Parent的时候是自己。第四个参数Activity，是具体执行startActivity任务的那个Activity，同时这个Activity负责处理onActivityResult。明白了这两个参数后，我们来看具体的代码。</p>
+<p><img src="http://img.blog.csdn.net/20161009165506838" alt="这里写图片描述"></p>
+<p>基本都在注释里写清楚了，核心方法是调了ActivityManagerNative.getDefault().startActivity方法getDefault是用系统提供的单例方法构造的一个单例对象，感觉这个方法也挺有意思，下次可以研究下。</p>
+<p><img src="http://img.blog.csdn.net/20161009170243301" alt="这里写图片描述"></p>
+<p>然后我们看ActivityManagerNative类中的startActivity方法<br><img src="http://img.blog.csdn.net/20161009170645365" alt="这里写图片描述"></p>
+<p>我们来看ActivityManagerNative这个类，会发现它继承了Binder，如果你对Android的Binder体系熟悉的话，你应该能明显的看出来，这个方法是一个调用远端进程方法，封装数据，然后调用了Remote的transact方法。Binder也是Android中可以拖出来讲很久的一个体系，后面也会拖一篇文章来讲这个。所以ActivityManagerNative就是一个Binder对象，我们需要找到他对应的远端Service。追一下mRemote赋值的地方，会发现是在创建的时候。</p>
+<p><img src="http://img.blog.csdn.net/20161009171802041" alt="这里写图片描述"></p>
+<p>插播一句，这里Singleton类是java中实现的单例模式，具体这个单例实现的效果如果，然后有什么优化，不是很清楚，准备有空分析下这个类。但是想想系统实现的应该不会太差，所以写单例模式的时候也可以用这个类来。</p>
+<p>我们回归正题，这个IBinder也可以跟到，简单来说，ActivityManagerNative的远端服务就是ActivityManagerService。整个Android程序其实是一个C/S结构，本地程序是一个Client，还一个Service端负责所有的程序调度。启动Activity肯定是系统的事啊，所以这里程序就把整个工作推给系统来做了。通过Binder模式，我们调到了远端Service的startActivity方法，来看这个方法。</p>
+<p><img src="http://img.blog.csdn.net/20161009172405939" alt="这里写图片描述"></p>
+<p>继续跟startActivityAsUser方法<br><img src="http://img.blog.csdn.net/20161009172721029" alt="这里写图片描述"></p>
+<p>首先会检查，当前进程是否是孤立进程。孤立进程是Service的一个属性。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">android:isolatedProcess</div></pre></td></tr></table></figure>
+<p>如果Service设置了这个属性，那么这个Service将运行在一个特殊的进程中，这个进程和系统其他进程是分开的。这个进程没有任何权限。和这样的Service进行交互就只能通过系统API（也就是bind和start）。</p>
+<p>简单来说，非孤立进程可以被拿来重用，重新运行新的app，孤立进程由于权限等问题，不能被重用，只能被销毁。所以在执行启动操作的时候要判断当前进程是否孤立进程，如果是，则不允许做start的操作。</p>
+<p>回到正题，startActivityAsUser方法调用了StackSupervisor的startActivityMayWait方法，StackSupervisor是一个Activity栈的管理器，Activity栈是用来存储已经生成的的Activity对象的。这个我们会在后面说明。来看下StackSupervisor的startActivityMayWait方法。我看了一下整个流程，前面处理了Intent，AcitivtyStack等，为startActivity做准备，后面返回Result，都不是很重要。所以我们继续往下追，只寻找关于startActivity的部分。startActivityMayWait中的这一句</p>
+<p><img src="http://img.blog.csdn.net/20161009180248576" alt="这里写图片描述"></p>
+<p>调用了startActivityLocked方法，startActivityLocked中，也是先进行了一系列的检查，包括intent中各种flag的判定，以一个err命令贯穿整个方法，如果中间有任何异常err就会被改变，就不能继续往下进行。</p>
+<p><img src="http://img.blog.csdn.net/20161009180410115" alt="这里写图片描述"></p>
+<p>然后，调用到startActivityUncheckedLocked中，这个方法也是一个超级长的方法，对startActivity做了各种检查和准备， 主要是对Activity分各种Flag进行相应的处理。这个方法里面就有我们常见的Activity的各种启动模式的配置。如图</p>
+<p><img src="http://img.blog.csdn.net/20161025140715881" alt="这里写图片描述"></p>
+<p>前面说到startActivityForResult的时候，提过必须在一个task中，处理也是这里。如果不是一个task，会response一个异常码。</p>
+<p><img src="http://img.blog.csdn.net/20161025140911557" alt="这里写图片描述"></p>
+<p>这里其他代码的处理太细节化了，我们抓一下主线，生成一个ActivityStack，并<br>调用Stack的startActivityLocked方法<br><img src="http://img.blog.csdn.net/20161009180849750" alt="这里写图片描述"></p>
+<p>这样我们就到了ActivityStack类里面，但是没过多久，startActivityLocked通过调用resumeTopActivitiesLocked又回到了ActivityStackSupervisor。</p>
+<p><img src="http://img.blog.csdn.net/20161025143058036" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161025143315259" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161025143426099" alt="这里写图片描述"></p>
+<p>做了一些检查，然后调到了resumeTopActivityInnerLocked，在resumeTopActivityInnerLocked中，因为thread和app都为null，所以执行了startSpecificActivityLocked方法，这就重新回到了ActivityStackSupervisor中</p>
+<p><img src="http://img.blog.csdn.net/20161025144451400" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161009182225273" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161009182516474" alt="这里写图片描述"></p>
+<p>我们可以看到startSpecificActivityLocked中，如果app和thread为null，会调用startProcessLocked启动一个新的线程。后面也会说到，新线程启动后还会回到这里，去调用真正的realStartActivityLocked，我们可以发现源码里的名字起的也是相当到位。</p>
+<p>这里暂时thread和app都是null，所以通知ActivityManagerService的startProcessLocked方法启动一个进程</p>
+<p>在ActivityManagerService的startProcessLocked方法中，前面处理了一下线程重用等的优化，用processRecord记录了要启动的进程的信息</p>
+<p><img src="http://img.blog.csdn.net/20161025145835484" alt="这里写图片描述"></p>
+<p>然后调了同名的startProcessLocked方法，但是参数由String的processName变成了ProcessRecord</p>
+<p><img src="http://img.blog.csdn.net/20161009183016089" alt="这里写图片描述"></p>
+<p>在这个方法中，通过Process.start启动了一个进程，并指定了进程的入口，也就是ActivityThread类的main方法。至于这个进程的启动过程涉及到Android内核层的东西了，这篇文章暂时不看这么细，我们就简单的理解为，新进程启动后，就会去调用指定的ActivityThread的main方法就好。</p>
+<p><img src="http://img.blog.csdn.net/20161009183252014" alt="这里写图片描述"></p>
+<p>最后总结一下这个过程，如果你不想关注太多的细节，只是提炼调用顺序的话，整个过程是这样的。</p>
+<p><img src="http://img.blog.csdn.net/20161025165024179" alt="这里写图片描述"></p>
+<p>这篇文章大概就到这里了。</p>
+<p>最开始的时候提到，这篇文章介绍的是从头启动一个程序的流程，所以到目前为止，我们可以看到，AMS侧的准备工作已经做好了也记录了Activity的所有信息，但是，Activity包括运行Activity的线程其实还没有正式启动。下一篇文章中我们会详细说明一个Application启动后的流程，也就是main方法中做了什么。</p>
+<p>例行广告，大家喜欢我的文章，可以关注我的博客<a href="zwgeek.com">zwgeek.com</a></p>
+]]></content>
+    </entry>
+    
+    <entry>
       <title><![CDATA[蒙哥马利算法详解]]></title>
       <url>http://zwgeek.com/2016/09/29/%E8%92%99%E5%93%A5%E9%A9%AC%E5%88%A9%E7%AE%97%E6%B3%95%E8%AF%A6%E8%A7%A3/</url>
       <content type="html"><![CDATA[<p>这篇文章为大家梳理一下整个蒙哥马利算法的本质，蒙哥马利算法并不是一个独立的算法，而是三个相互独立又相互联系的算法集合，其中包括    </p>
