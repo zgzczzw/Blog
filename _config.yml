@@ -12,7 +12,7 @@ timezone:
 avatar: /uploads/avatar.jpg
 
 #duoshuo
-duoshuo_shortname: zgzczzw
+# duoshuo_shortname: zgzczzw
 
 #baidu
 baidu_analytics: 3dacdfd5ec97423055f59e8df9a09690
@@ -88,7 +88,8 @@ feed:
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repository: https://github.com/zgzczzw/zgzczzw.github.io.git
+  repo: git@47.94.216.71:/home/git/blog.git
+  # repository: https://github.com/zgzczzw/zgzczzw.github.io.git
   branch: master
   plugins: 
    - hexo-generator-feed
