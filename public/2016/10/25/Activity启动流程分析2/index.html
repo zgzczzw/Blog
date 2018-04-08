@@ -1,0 +1,1209 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Android,Activity启动,系统," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="逍遥居" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="广告时间，大家喜欢我的文章，可以关注我的博客http://zwgeek.com
+前面说到，希望分析一下Activity的启动流程，整个过程准备分为三篇文章来写
+
+程序调用startActivity后发生的操作
+如果被startActivity的程序是需要启动的程序，程序在最开始初始化时发生的操作。例如在Launcher中启动一个程序。
+如果被startActivity的程序是已经启动的程序，发生的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Activity启动流程分析（二）">
+<meta property="og:url" content="http://zwgeek.com/2016/10/25/Activity启动流程分析2/index.html">
+<meta property="og:site_name" content="逍遥居">
+<meta property="og:description" content="广告时间，大家喜欢我的文章，可以关注我的博客http://zwgeek.com
+前面说到，希望分析一下Activity的启动流程，整个过程准备分为三篇文章来写
+
+程序调用startActivity后发生的操作
+如果被startActivity的程序是需要启动的程序，程序在最开始初始化时发生的操作。例如在Launcher中启动一个程序。
+如果被startActivity的程序是已经启动的程序，发生的">
+<meta property="og:image" content="http://img.blog.csdn.net/20161025184513316">
+<meta property="og:image" content="http://img.blog.csdn.net/20161025191248464">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026103756562">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026104634204">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026110532870">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026110642120">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026110745261">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026111207622">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026111410272">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026112941262">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026113020966">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026113436006">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026125950474">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026130023435">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026130056888">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026130144586">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026130314369">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026133403057">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026133429604">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026133859665">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026133929525">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026134148091">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026134554910">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026134728344">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026134924665">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026135017838">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026135315421">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026135758475">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026141040256">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026141633514">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026150656396">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026151007131">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026151225913">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026151527821">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026152020367">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026152153386">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026152429639">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026152636325">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026152944396">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026153551690">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026154101442">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026154453198">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026154706405">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026154913320">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026155148379">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026165138600">
+<meta property="og:updated_time" content="2017-05-09T02:44:21.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Activity启动流程分析（二）">
+<meta name="twitter:description" content="广告时间，大家喜欢我的文章，可以关注我的博客http://zwgeek.com
+前面说到，希望分析一下Activity的启动流程，整个过程准备分为三篇文章来写
+
+程序调用startActivity后发生的操作
+如果被startActivity的程序是需要启动的程序，程序在最开始初始化时发生的操作。例如在Launcher中启动一个程序。
+如果被startActivity的程序是已经启动的程序，发生的">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20161025184513316">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://zwgeek.com/2016/10/25/Activity启动流程分析2/"/>
+
+  <title> Activity启动流程分析（二） | 逍遥居 </title><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?3dacdfd5ec97423055f59e8df9a09690";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+      }
+      else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">逍遥居</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Activity启动流程分析（二）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-25T17:03:13+08:00" content="2016-10-25">
+              2016-10-25
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/10/25/Activity启动流程分析2/" class="leancloud_visitors" data-flag-title="Activity启动流程分析（二）">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>广告时间，大家喜欢我的文章，可以关注我的博客<a href="http://zwgeek.com">http://zwgeek.com</a></p>
+<p>前面说到，希望分析一下Activity的启动流程，整个过程准备分为三篇文章来写</p>
+<ul>
+<li>程序调用startActivity后发生的操作</li>
+<li>如果被startActivity的程序是需要启动的程序，程序在最开始初始化时发生的操作。例如在Launcher中启动一个程序。</li>
+<li>如果被startActivity的程序是已经启动的程序，发生的操作。例如程序自己调用startActivity启动一个自己程序中的Activity</li>
+</ul>
+<p>第一篇文章也已经讲完了程序调用startActivity之后发生的事情。</p>
+<p>还没有读过的同学可以看这里<a href="http://zwgeek.com/2016/10/09/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/">Activity启动流程分析</a></p>
+<p>这篇文章就来讲第二个部分，一个程序被启动之后发生的事情。第一篇文章中还提到了几个问题，也会在这篇文章中做出解答。</p>
+<ul>
+<li>getApplication() ，getApplicationContext()，getBaseContext()分别有什么区别？</li>
+<li>单个进程中能存在多个application么？</li>
+<li>为什么不能使用service或者application作为创建dialog的context参数？</li>
+</ul>
+<p>第一篇文章最后讲到了Process.start方法，说到了这个方法会启动一个线程，并且运行ActivityThread的main方法来正式开启一个Android程序。所以，很显然，这篇文章就要从ActivityThread的main方法来开始。</p>
+<p>首先，来看一下这个Android程序的起点方法，一睹芳容。</p>
+<p><img src="http://img.blog.csdn.net/20161025184513316" alt="这里写图片描述"></p>
+<p>这个方法重要的是在Looper prepare之后的部分，Handler跟loop的机制比较简单，可以先百度一下，我后面可能也会写篇文章说一下。简单来说loop就是一个无限循环，通过循环去去查询有没有handler发过来命令，如果有就处理，没有就继续循环。</p>
+<p>这样的话，我们就能看出，主进程在做了一个初始化工作之后就把自己放在了一个loop循环中，要跟这个程序打交道，怎么办呢，就是通过获取它的handler，然后发命令，比如现在需要调用onResume方法，通过handler告诉主进程looper要调用onResume，looper就会做相应的处理了。当然这个是关于Android生命周期方法的调用问题，我们也是要单独拉出来讲的，这里就不细说了。</p>
+<p>其实这篇文章的重点是这一句话，thread.attach(false)，ActivityThread的初始化操作。来看下这个方法具体做了什么操作。</p>
+<p><img src="http://img.blog.csdn.net/20161025191248464" alt="这里写图片描述"></p>
+<p>这个方法看下来还好，也都是配置一些监听器，像ViewRoot监听，内存监听，等等。重要的还是我选中的这一段，首先创建了一个ApplicationThread，然后把这个ApplicationThread交给了RuntimeInit，很多人开发过程中最头痛的就是RuntimeException，其实这里就是异常监控的初始化过程。然后创建了一个ActivityManagerNative，第一篇文章中就提过，ActivityManagerNative在创建的时候就会和ActivityManagerService绑定。接下来程序就可以通过AMN来访问AMS了。可是大家有想过，Client可以通过AMN来访问AMS，但是Server端怎么访问Client端呢，看这句话attachApplication，其实这里就是程序把自己的一个控制器交给了Server端，然后Server端就可以通过这个控制器来操作Client端了。不信我们来看下ApplicationThread的方法。</p>
+<p><img src="http://img.blog.csdn.net/20161026103756562" alt="这里写图片描述"></p>
+<p>是不是看到很多控制生命周期的方法，是的，AMS就是通过这个ApplicationThread来控制Client端的。</p>
+<p>那么我们来总结一下这里，程序通过AMN来绑定AMS后，自己创建了一个桥梁applicationThread，然后把这个桥梁交给AMS，意思就是说，这是我小弟，以后联系我可以通过他。另一方面，在这个attach中client的各种初始化已经完成了。接下来的工作就通过attachApplication这个方法移交给AMS端了。</p>
+<p>那接下来我们来看AMS端的attachApplication方法</p>
+<p><img src="http://img.blog.csdn.net/20161026104634204" alt="这里写图片描述"></p>
+<p>AMS端先通过Binder查询到程序的pid，然后调用attachApplicationLocked，继续往下看，这个方法就是AMS在接到“一个新进程启动了”这件事之后做了一些工作，很复杂，但AMS毕竟是老板，多做一些是正常的。</p>
+<p><img src="http://img.blog.csdn.net/20161026110532870" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161026110642120" alt="这里写图片描述"></p>
+<p>先是用一个ProcessRecord来记录所有和Process有关的信息。</p>
+<p><img src="http://img.blog.csdn.net/20161026110745261" alt="这里写图片描述"></p>
+<p>这里有一个generateProvider的操作，但是我感觉应该不是生成程序的ContentProvider，因为此时Manifest文件还没有被解析，这里应该是为Application生成一些系统必要的ContentProvider。至于对不对，后面再验证吧。</p>
+<p>后面做了一些配置工作后，调用了这个方法</p>
+<p><img src="http://img.blog.csdn.net/20161026111207622" alt="这里写图片描述"></p>
+<p>是的，这个方法才是主线剧情。通过这个方法，AMS将自己初始化的一些成果，告诉了Client端，并将控制权重新交回给Client端。在看bindApplication之前，我们看下AMS后面的工作。</p>
+<p><img src="http://img.blog.csdn.net/20161026111410272" alt="这里写图片描述"></p>
+<p>源码的注释写的比较清楚了，判断有没有其他组件在等这个进程启动，如果有，那么这个进程已经启动了，就该通知他们做事了。这不关我们的事，回到正题吧，看看控制权回到Client那边后，又做了什么。不过这里我们也再一次验证了AMS通过ApplicationThread这个类来和Client端打交道。</p>
+<p>好，老板做完事情了，工作又回到小弟手中了。什么？你说老板其实什么都没做，你可以去财务领工资了。</p>
+<p>但是ApplicationThread毕竟是个桥梁，实际的工作还是得给app的老大ActivityThread来做，所以这个bindApplication方法也是记录了一些AMS传回来的信息之后，又把工作给了ActivityThread。</p>
+<p>我们来看下这个bindApplication做了什么，首先记录了一些配置信息</p>
+<p><img src="http://img.blog.csdn.net/20161026112941262" alt="这里写图片描述"></p>
+<p>然后在VM中注册APP的信息</p>
+<p><img src="http://img.blog.csdn.net/20161026113020966" alt="这里写图片描述"></p>
+<p>这里注释也说了，有两种情况，两个package是共享runtime的。</p>
+<ul>
+<li>设置了shareUserId</li>
+<li>设置了ProcessName</li>
+</ul>
+<p>在share的情况下是不用再VM中注册的，我的理解是，share的组件并不是一个完整的app，而他所属的原来的app其实已经注册过了。</p>
+<p>这里有个问题是，工作是怎么给ActivityThread的呢？看bindApplication的第三部分</p>
+<p><img src="http://img.blog.csdn.net/20161026113436006" alt="这里写图片描述"></p>
+<p>ApplicationThread是ActivityThread的内部类，内部类代表什么呢，它其实是持有一个外部类ActivityThread的对象引用的。可以这么说在ApplicationThread中其实是可以调到ActivityThread的所有方法的。那么它为什么要用这种sendMessage，然后通过Handler处理的这种方式呢。我们来想一下Handler的一个作用是什么。切换线程，在任何情况下，不管bindApplication这个方法运行在哪个线程中，只要通过handler这种方式，都可以回到ActivityThread所在的线程，也就是主线程。这就保证了什么呢，保证了Android的所有生命周期方法都是运行在主线程的，也就是我们常说的UI线程。</p>
+<p>简单跟下sendMessage</p>
+<p><img src="http://img.blog.csdn.net/20161026125950474" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161026130023435" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161026130056888" alt="这里写图片描述"></p>
+<p>mH是一个H类型的对象，这个H就是ActivityThread内部的Handler</p>
+<p><img src="http://img.blog.csdn.net/20161026130144586" alt="这里写图片描述"></p>
+<p>看下这个Handler的handleMessage方法，跟下对BIND_APPLICATION消息的处理。</p>
+<p><img src="http://img.blog.csdn.net/20161026130314369" alt="这里写图片描述"></p>
+<p>进到了handleBIndApplication方法，这里就是Application的启动过程了，让我们来仔细看下这个方法处理的步骤</p>
+<p><img src="http://img.blog.csdn.net/20161026133403057" alt="这里写图片描述"></p>
+<p>国际惯例，前面也是各种记录，配置，初始化的工作，我们可以完全忽略。</p>
+<p><img src="http://img.blog.csdn.net/20161026133429604" alt="这里写图片描述"></p>
+<p>这个地方是一个小的知识点，在3.1以前的版本上，AsyncTask会改变默认的executor，我们看下改变之后的executor是什么样的。</p>
+<p><img src="http://img.blog.csdn.net/20161026133859665" alt="这里写图片描述"></p>
+<p>而默认的executor是这样的</p>
+<p><img src="http://img.blog.csdn.net/20161026133929525" alt="这里写图片描述"></p>
+<p>所以3.1以前版本的AsyncTask是并行执行任务的，而3.1以后版本反而是顺序执行任务的，当然，这个配置可以通过AsyncTask的参数而改变。</p>
+<p>然后我们回到handleBindApplication，后面会继续设置时区，位置，屏幕参数等。</p>
+<p><img src="http://img.blog.csdn.net/20161026134148091" alt="这里写图片描述"></p>
+<p>之后创建了一个Context对象，注意，这是我们到目前位置接触到的第一个Context。我们知道在Android中Application，Activity等等其实都是Context的子类，但是他们又是不同的。这里创建的这个context对应的是我们开发过程中的哪个呢，让我们继续往下看。</p>
+<p><img src="http://img.blog.csdn.net/20161026134554910" alt="这里写图片描述"></p>
+<p>然后又是一堆配置，其中包括UI线程不能执行网络操作的配置</p>
+<p><img src="http://img.blog.csdn.net/20161026134728344" alt="这里写图片描述"></p>
+<p>然后是关于调试的相关配置，开启一个调试端口，其实关于调试也是需要讲很多的，调试本身也是C/S结构的，客户端开一个端口，等着服务端来连接进行调试，这里就是客户端打开端口的操作。</p>
+<p><img src="http://img.blog.csdn.net/20161026134924665" alt="这里写图片描述"></p>
+<p>设置了一个默认的HTTP代理</p>
+<p><img src="http://img.blog.csdn.net/20161026135017838" alt="这里写图片描述"></p>
+<p>后面一段是创建了一个Instrumentation对象，这里不截图的。之前第一篇文章我们也提到过，跟ActivityStart有关的操作都是由Instrumentation这个类管理的，被我们亲切的称为大管家，其实是为了监视我们的操作。。。</p>
+<p>然后，这个方法讲了这么多，前面大家基本可以忽略，到现在才是重点。</p>
+<p><img src="http://img.blog.csdn.net/20161026135315421" alt="这里写图片描述"></p>
+<p>这一段，首先创建了一个Application，恩，我们开发过程中遇见的Application就是这里生成的。后面一段是初始化ContentProvider，这个我们后面讲ContentProvider启动过程的时候会看到，不过这里能知道的一个点就是ContentProvider的启动时间是相当早的，在Application的onCreate之前。然后这里的providers确实是之前我们说到的AMS生成的，然后一路传过来的。恩，先不细看了，因为这篇文章主要想说Activity的启动过程。</p>
+<p>后面调用了Instrumentation的onCreate方法，是个空方法，可Override，再后面看到吗，通过Instrumentation大管家呼叫了Application的OnCreate方法</p>
+<p><img src="http://img.blog.csdn.net/20161026135758475" alt="这里写图片描述"></p>
+<p>至此，我们开发者接触到的Android生命周期中的第一个方法，Application的onCreate被执行了。至于前面生成的Context，我看了一下，传给了Instrumentation成为了Instrumentation中的appContext，但是我并没有找到跟Application对象结合的方法。这个继续往后看吧。</p>
+<p>到此为止，这个handleBindApplication方法就结束了，创建了一个appContext，一个Instrumentation，一个Application，并且调用了Application的onCreate。中间还涉及到ContentProvider的初始化操作，我们先忽略。那么Activity在哪里，为什么感觉自己被带偏了。我又一路往前找。终于在AMS的attachApplicationLocked中，我看到了这一步。</p>
+<p><img src="http://img.blog.csdn.net/20161026141040256" alt="这里写图片描述"></p>
+<p>bindApplication在执行完我们上面说的那一堆之后，调用了StackSupervisor的attachApplicationLocked，好，我们来看一下。同时，这里的调用顺序也保证了Application的onCreate方法在Activity之前进行。</p>
+<p><img src="http://img.blog.csdn.net/20161026141633514" alt="这里写图片描述"></p>
+<p>方法中有一个realStartActivity的方法，名字很形象，前面我们调用过那么多次的startActivity，但是真正的Activity在这里才生成。</p>
+<p>这个realStartActivity嘟噜嘟噜的扯了好多，不知道在干吗，但是终于看到了一个熟悉的影子</p>
+<p><img src="http://img.blog.csdn.net/20161026150656396" alt="这里写图片描述"></p>
+<p>就这样控制权又回到了ActivityThread</p>
+<p><img src="http://img.blog.csdn.net/20161026151007131" alt="这里写图片描述"></p>
+<p>这里先创建了一个ActivityClientRecord，这个就是Client端管理生成的activity对象的包装类，后面生成的Activity类都会被ActivityClientRecord包装一层，然后保存到ActivityThread的mActivities中。</p>
+<p><img src="http://img.blog.csdn.net/20161026151225913" alt="这里写图片描述"></p>
+<p>跟Application那边一样，scheduleLaunchActivity最终会被handleLaunchActivity处理，我们略过中间过程，直接看handleLaunchActivity吧。</p>
+<p><img src="http://img.blog.csdn.net/20161026151527821" alt="这里写图片描述"></p>
+<p>这个方法触发了Activity的两个生命周期方法，分别是我标出来的onCreate的onResume，然后后面那一段我的理解是Activity被创建出来，并且调用了onResume之后并没有被显示，那么就立刻调用onPause，但其实不是很懂这个地方。让我想想再回来补充吧。</p>
+<p>接下来看performLaunchActivity吧</p>
+<p><img src="http://img.blog.csdn.net/20161026152020367" alt="这里写图片描述"></p>
+<p>首先更新了ActivityClientRecord的信息，包括ActivityInfo，ComponentName等，我们开发过程中也是经常用到，这些信息都是存在ActivityClientRecord中的。</p>
+<p><img src="http://img.blog.csdn.net/20161026152153386" alt="这里写图片描述"></p>
+<p>接下来创建了一个Activity，天哪，我们分析了这么久，终于看到Activity了。创建过程很简单，通过反射new了一个类出来，这个时候的Activity是还没有生命周期的。需要把Activity托管给AMS，才能有生命周期。</p>
+<p><img src="http://img.blog.csdn.net/20161026152429639" alt="这里写图片描述"></p>
+<p>接着，我们获取到之前创建的那个Application，为Activity创建了一个Context，然后通过Activity的attach方法把这些绑定起来。</p>
+<p><img src="http://img.blog.csdn.net/20161026152636325" alt="这里写图片描述"></p>
+<p>生成Context的方法和之前为Instrumentation生成Context的方法差不多，返回的是一个ContextImpl类型的对象，保存了Activity的上下文。</p>
+<p><img src="http://img.blog.csdn.net/20161026152944396" alt="这里写图片描述"></p>
+<p>attach方法将所有的对象包括Instrumentation，Application, ActivityThread等等全部在Activity中保存了一份。</p>
+<p><img src="http://img.blog.csdn.net/20161026153551690" alt="这里写图片描述"></p>
+<p>回到performLaunchActivity，attach之后通过Instrumentation大管家调用了Activity的onCreate方法</p>
+<p><img src="http://img.blog.csdn.net/20161026154101442" alt="这里写图片描述"></p>
+<p>然后将生成的activity交给ActivityClientRecord，并保存在mActivities中，这就完成了Activity的生成，并托管给系统，之后系统都可以在适当的时候通过token来获取到相应的Activity，并调用其生命周期。</p>
+<p>这样performLaunchActivity就结束了，我们返回上一层handleLaunchActivity继续往下看，Activity在生成之后是会立刻调用onResume的。这两个生命周期有什么区别呢， 其实就在于onCreate跟onResume之间执行的这几句话，说实话，在创建的时候区别不大。不同的是onResume未来还会被调用，但是onCreate只有创建的时候才会被调用。</p>
+<p><img src="http://img.blog.csdn.net/20161026154453198" alt="这里写图片描述"></p>
+<p>其实到这来一个Activity的启动流程就已经结束了，但是我们顺便来看下handleResumeActivity的工作吧</p>
+<p><img src="http://img.blog.csdn.net/20161026154706405" alt="这里写图片描述"></p>
+<p>看这来，从mActivities中根据token获取了ActivityClientRecord，并进一步获得了里面的activity，然后执行了onResume方法，我刚想说，咦，这次调用没有通过大管家哎，然后看了一下performResume方法里面，其实还是通过Instrumentation调用的。</p>
+<p><img src="http://img.blog.csdn.net/20161026154913320" alt="这里写图片描述"></p>
+<p>然后，还更新了ActivityClientRecord的相关信息等。</p>
+<p>其实到这里onResume已经调用完成了，那么handleResumeActivity后面的这一堆在干什么呢？</p>
+<p><img src="http://img.blog.csdn.net/20161026155148379" alt="这里写图片描述"></p>
+<p>通过方法名我们知道，Activity在onResume之后才开始处理显示的逻辑，这里就是通知AMS，Activity onResume已经调用完了，接下来要显示了，那么AMS就会通知WindowManger来显示Activity，这就是另外一件事了，我们在这里就不细细讨论了。</p>
+<p>呼~终于写完了，整个流程主线还是很清楚的，AMS和AMN的分工明确。 </p>
+<p>整个流程总结一下，是下面这种关系</p>
+<p><img src="http://img.blog.csdn.net/20161026165138600" alt="这里写图片描述"></p>
+<p>最后还是广告时间，如果喜欢这篇文章，可以关注我的博客<a href="http://zwgeek.com">http://zwgeek.com</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/uploads/wechat-reward-image.jpeg" alt="轩辕 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag">#Android</a>
+          
+            <a href="/tags/Activity启动/" rel="tag">#Activity启动</a>
+          
+            <a href="/tags/系统/" rel="tag">#系统</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/11/AndroidNDK使用简介/" rel="next" title="Android NDK 使用简介">
+                <i class="fa fa-chevron-left"></i> Android NDK 使用简介
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/10/26/Activity启动流程番外篇/" rel="prev" title="Activity启动流程番外篇">
+                Activity启动流程番外篇 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+  <div class="comments" id="comments">
+  <!--PC和WAP自适应版-->
+<div id="SOHUCS" ></div> 
+<script type="text/javascript"> 
+(function(){ 
+var appid = 'cyt0SiYIG'; 
+var conf = 'prod_8b6ae98478e792e771042310b91a3839'; 
+var width = window.innerWidth || document.documentElement.clientWidth; 
+if (width < 960) { 
+window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="text/javascript" src="http://changyan.sohu.com/upload/mobile/wap-js/changyan_mobile.js?client_id=' + appid + '&conf=' + conf + '"><\/script>'); } else { var loadJs=function(d,a){var c=document.getElementsByTagName("head")[0]||document.head||document.documentElement;var b=document.createElement("script");b.setAttribute("type","text/javascript");b.setAttribute("charset","UTF-8");b.setAttribute("src",d);if(typeof a==="function"){if(window.attachEvent){b.onreadystatechange=function(){var e=b.readyState;if(e==="loaded"||e==="complete"){b.onreadystatechange=null;a()}}}else{b.onload=a}}c.appendChild(b)};loadJs("http://changyan.sohu.com/upload/changyan.js",function(){window.changyan.api.config({appid:appid,conf:conf})}); } })(); </script>
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="轩辕" />
+          <p class="site-author-name" itemprop="name">轩辕</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">18</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xuan-yuan-40-22" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zgzczzw" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/zgzczzw" target="_blank" title="CSDN">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  CSDN
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.douban.com/people/65077069/" target="_blank" title="豆瓣">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  豆瓣
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2015 - 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">轩辕</span>
+</div>
+
+<div class="powered-by">
+  <!--由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动-->
+</div>
+
+<div class="theme-info">
+  <!--主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>-->
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = true;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '' && data_content != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title < 0 && index_content < 0 ){
+                                isMatch = false;
+                            } else {
+                                if (index_content < 0) {
+                                    index_content = 0;
+                                }
+                                if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            }
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("HkzSeXgqv4E0fnYfDSnSPqlh-gzGzoHsz", "aJ6qgC0qEVu8NyCBj9zqC7Sr");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+
+
+  
+
+</body>
+</html>

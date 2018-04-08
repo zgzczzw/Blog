@@ -1,0 +1,1192 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Android,Activity启动,系统," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="逍遥居" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="前两篇文章分析了Activity的启动流程的大部分。
+第一篇文章讲了程序在调用startActivity之后发生的一些操作Activity启动流程分析
+第二篇文章讲了一个Android程序从最开始启动到一个Activity呈现到用户之间发生的一些操作Activity启动流程分析（二）
+在这两篇文章之前，我就提出了三个问题，前面也分析的差不多了，准备在这篇文章中来回答这三个问题，所以如果你还没有看前">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Activity启动流程番外篇">
+<meta property="og:url" content="http://zwgeek.com/2016/10/26/Activity启动流程番外篇/index.html">
+<meta property="og:site_name" content="逍遥居">
+<meta property="og:description" content="前两篇文章分析了Activity的启动流程的大部分。
+第一篇文章讲了程序在调用startActivity之后发生的一些操作Activity启动流程分析
+第二篇文章讲了一个Android程序从最开始启动到一个Activity呈现到用户之间发生的一些操作Activity启动流程分析（二）
+在这两篇文章之前，我就提出了三个问题，前面也分析的差不多了，准备在这篇文章中来回答这三个问题，所以如果你还没有看前">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026174737355">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026174850543">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026175138524">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026175239338">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026175707140">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026180630012">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026180758006">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026181449946">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026181724666">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026181855572">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026182021733">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026182206188">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026182544622">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031110946531">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031110409263">
+<meta property="og:image" content="http://img.blog.csdn.net/20161026184204831">
+<meta property="og:image" content="http://img.blog.csdn.net/20161027112934008">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028150931848">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028151340745">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028151709929">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028152220400">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028152438321">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028152806777">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028152932700">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028155113014">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028155158458">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028162358849">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028162517980">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028170422891">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028170435500">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028170445195">
+<meta property="og:image" content="http://img.blog.csdn.net/20161028165305907">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031102436168">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031102800676">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031102949037">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031103246376">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031103849988">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031104032942">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031104348943">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031104822710">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031105217598">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031105401819">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031105444244">
+<meta property="og:image" content="http://img.blog.csdn.net/20161031113058149">
+<meta property="og:updated_time" content="2017-05-09T02:44:21.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Activity启动流程番外篇">
+<meta name="twitter:description" content="前两篇文章分析了Activity的启动流程的大部分。
+第一篇文章讲了程序在调用startActivity之后发生的一些操作Activity启动流程分析
+第二篇文章讲了一个Android程序从最开始启动到一个Activity呈现到用户之间发生的一些操作Activity启动流程分析（二）
+在这两篇文章之前，我就提出了三个问题，前面也分析的差不多了，准备在这篇文章中来回答这三个问题，所以如果你还没有看前">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20161026174737355">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://zwgeek.com/2016/10/26/Activity启动流程番外篇/"/>
+
+  <title> Activity启动流程番外篇 | 逍遥居 </title><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?3dacdfd5ec97423055f59e8df9a09690";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+      }
+      else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">逍遥居</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Activity启动流程番外篇
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-26T17:29:01+08:00" content="2016-10-26">
+              2016-10-26
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/10/26/Activity启动流程番外篇/" class="leancloud_visitors" data-flag-title="Activity启动流程番外篇">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>前两篇文章分析了Activity的启动流程的大部分。</p>
+<p>第一篇文章讲了程序在调用startActivity之后发生的一些操作<a href="http://zwgeek.com/2016/10/09/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%90/">Activity启动流程分析</a></p>
+<p>第二篇文章讲了一个Android程序从最开始启动到一个Activity呈现到用户之间发生的一些操作<a href="http://zwgeek.com/2016/10/25/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%902/">Activity启动流程分析（二）</a></p>
+<p>在这两篇文章之前，我就提出了三个问题，前面也分析的差不多了，准备在这篇文章中来回答这三个问题，所以如果你还没有看前两篇文章，还是希望你能大概读一下之前两篇文章再来看这篇番外篇。</p>
+<p>好，回归正题，提了三个问题，分别是哪三个问题呢。</p>
+<ul>
+<li>getApplication() ，getApplicationContext()，getBaseContext()分别有什么区别？</li>
+<li>单个进程中能存在多个application么？</li>
+<li>为什么不能使用service或者application作为创建dialog的context参数？</li>
+</ul>
+<h4 id="第一个问题"><a href="#第一个问题" class="headerlink" title="第一个问题"></a>第一个问题</h4><p>getApplication() ，getApplicationContext()，getBaseContext()分别有什么区别？</p>
+<p>对于这个问题，我们首先看一下这三个方法返回的对象分别是什么。</p>
+<p>getApplication()<br><img src="http://img.blog.csdn.net/20161026174737355" alt="这里写图片描述"></p>
+<p>getApplication返回的是Activity中的mApplication对象，这个对象是在attach的时候赋给Activity的</p>
+<p><img src="http://img.blog.csdn.net/20161026174850543" alt="这里写图片描述"></p>
+<p>第二篇文章中也讲到了attach的调用是在ActivityThread的performLaunchActivity中，传递的Application是通过makeApplication生成的。</p>
+<p><img src="http://img.blog.csdn.net/20161026175138524" alt="这里写图片描述"></p>
+<p>我们来看下makeApplication</p>
+<p><img src="http://img.blog.csdn.net/20161026175239338" alt="这里写图片描述"></p>
+<p>方法中我们可以发现makeApplication是会返回当前的mApplication的，那当前的这个mApplication到底是不是程序最开始创建的那个Application呢，也就是在bindApplicaiton中生成的Application。</p>
+<p><img src="http://img.blog.csdn.net/20161026175707140" alt="这里写图片描述"></p>
+<p>要看这两个Application是否相同，我们可以跟踪创建它的LoadApk类，也就是这里的data.info和前面的r.packageInfo</p>
+<p>好吧，继续追吧，看看能不能看到这两个对象的源头data.info是在handleBindApplication方法中通过getPackageInfoNoCheck获取到的。</p>
+<p><img src="http://img.blog.csdn.net/20161026180630012" alt="这里写图片描述"></p>
+<p>getPackageInfoNoCheck调用了getPackageInfo方法。看下这个方法</p>
+<p><img src="http://img.blog.csdn.net/20161026180758006" alt="这里写图片描述"></p>
+<p>这里可以很明显的看出，PackageInfo在ActivityThread中是单例的，这个对象跟packageName挂钩，那么我们也知道，一个Android程序的packageName是唯一的。所以基本可以确定前面两个创建Application的packageInfo是一样的，为了保险起见，我们再追一下另外一个packageInfo吧，也就是r.packageInfo。</p>
+<p><img src="http://img.blog.csdn.net/20161026181449946" alt="这里写图片描述"></p>
+<p>看到了吧，也是调用前面的getPackageInfoNoCheck方法获取到的。所以正确流程下，一个Android程序中Application是唯一的，getApplication返回的就是这个对象。为什么说是正常流程下呢，这对应的是我们的第二个问题，后面会做出解答。</p>
+<p>第二个方法getApplicationContext()<br>这个方法是在ContextWrapper中的，Activity是继承在这个类的。</p>
+<p><img src="http://img.blog.csdn.net/20161026181724666" alt="这里写图片描述"></p>
+<p>这里又关系到mBase这个对象，这个对象其实也是在Activity attch的时候绑定进来的，就是图中这个地方创建的appContext，这个对象是ContextImpl类型的。</p>
+<p><img src="http://img.blog.csdn.net/20161026181855572" alt="这里写图片描述"></p>
+<p>我们进去看下它的getApplicationContext方法</p>
+<p><img src="http://img.blog.csdn.net/20161026182021733" alt="这里写图片描述"></p>
+<p>如果packageInfo不为null，那么返回packageInfo的Application，否则返回mainThread的Application</p>
+<p><img src="http://img.blog.csdn.net/20161026182206188" alt="这里写图片描述"></p>
+<p>创建这个ContextImpl的packageInfo其实就是前面分析的r.packageInfo，所以这个ApplicationContext跟前面的Application是完全一样的。如果packageInfo是空，返回的是ActivityThread中的Application，而ActivityThread中的Application是handleBindApplication中生成的那个，跟前面也是一样的。</p>
+<p>综上所述，getApplicationContext跟getApplication是相同的，接下来我们再看下getBaseContext()</p>
+<p><img src="http://img.blog.csdn.net/20161026182544622" alt="这里写图片描述"></p>
+<p>这里返回的就是前面说的mBase，这个mBase是一个ContextImpl类型的对象，是为Activity专门创建的，与Application就不一样了。</p>
+<p>好，这就是第一个问题的答案。</p>
+<h4 id="第二个问题"><a href="#第二个问题" class="headerlink" title="第二个问题"></a>第二个问题</h4><p>单个进程中能存在多个application么？</p>
+<p>忽然意识到第二个问题其实在第一个问题中已经做了部分回答，一个LoadedApk中只能存在一个application。</p>
+<p>但是事实是这样吗，我们来看下ActivityThread中创建Application的地方。正如第一个问题分析的，虽然在第一句话的时候，限制了mApplication的单例性，但是请注意后面对Application的管理。</p>
+<p><img src="http://img.blog.csdn.net/20161031110946531" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161031110409263" alt="这里写图片描述"></p>
+<p>ActivityThread是一个进程，这里很明显我们已经能看出，Android中一个进程是允许存在多个Application的，但是正常情况下，是不会出现多个Application的，那么不正常的情况是什么呢，你可以通过反射得到这个mAllApplications，然后手动把自己的Application放进去。为了什么？当然是一些奇技淫巧了，后面有机会讲到插件化实现的时候会说到。</p>
+<p>反正这里你知道一个结论就行了，一个进程是允许多个Application的，但是Android的正常流程下，一个进程只有一个Application。</p>
+<h4 id="第三个问题"><a href="#第三个问题" class="headerlink" title="第三个问题"></a>第三个问题</h4><p>为什么不能使用service或者application作为创建dialog的context参数？</p>
+<p>用service或者Application启动dialog的时候会报错</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Caused by: android.view.WindowManager$BadTokenException: Unable to add window -- token <span class="keyword">null</span> is not <span class="keyword">for</span> an application</div><div class="line">                           at android.view.ViewRootImpl.setView(ViewRootImpl.java:<span class="number">685</span>)</div><div class="line">                           at android.view.WindowManagerGlobal.addView(WindowManagerGlobal.java:<span class="number">342</span>)</div><div class="line">                           at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:<span class="number">93</span>)</div><div class="line">                           at android.app.Dialog.show(Dialog.java:<span class="number">316</span>)</div></pre></td></tr></table></figure>
+<p>我们来看一下这个错误是哪里报出的，是在ViewRootImpl的setView中</p>
+<p><img src="http://img.blog.csdn.net/20161026184204831" alt="这里写图片描述"></p>
+<p>对res进行判断，而这个res是这句话返回的，既然异常是关于token的，也就是说在addToDisplay的时候对当前view的token进行了检查。</p>
+<p><img src="http://img.blog.csdn.net/20161027112934008" alt="这里写图片描述"></p>
+<p>mWindowSession是一个Session类型的，addToDidplay代码如下</p>
+<p><img src="http://img.blog.csdn.net/20161028150931848" alt="这里写图片描述"></p>
+<p>其实如果你分析的多了，不用看也知道mService肯定是WindowManagerService，这个Service和ActivityManagerService一样，在Framework层是很重要的一个类，负责窗口绘制等。</p>
+<p>异常报出的case是ADD_NOT_APP_TOKEN，找一下</p>
+<p><img src="http://img.blog.csdn.net/20161028151340745" alt="这里写图片描述"></p>
+<p>所以看得出来，报出这个异常有两个条件，一是type是APPLICATION_WINDOW，二是要有APPWindowToken。</p>
+<p>先看看这个TYPE吧</p>
+<p><img src="http://img.blog.csdn.net/20161028151709929" alt="这里写图片描述"></p>
+<p>通过看这个类的注释，大概知道什么意思，WINDOW分为几大类<br>1-99是Application window<br>1000-1999是sub window<br>2000-2999是system window</p>
+<p>挨个来看注释</p>
+<h5 id="Application-Window"><a href="#Application-Window" class="headerlink" title="Application Window"></a>Application Window</h5><p><img src="http://img.blog.csdn.net/20161028152220400" alt="这里写图片描述"></p>
+<p>Application Window就是普通的应用程序window，像Activity，Dialog都属于这一类</p>
+<h5 id="Sub-Window"><a href="#Sub-Window" class="headerlink" title="Sub Window"></a>Sub Window</h5><p><img src="http://img.blog.csdn.net/20161028152438321" alt="这里写图片描述"></p>
+<p>SubWIndow，从注释可以看出，这类window必须有一个可依附的其他Window，然后在坐标轴Z上它是它所依附的Window的下一个，然后它的坐标体系也依附于它所依附的Window的坐标。</p>
+<p>下面指出了一些Sub Window，Panel，media等等。</p>
+<h5 id="SYSTEM-WINDOW"><a href="#SYSTEM-WINDOW" class="headerlink" title="SYSTEM WINDOW"></a>SYSTEM WINDOW</h5><p><img src="http://img.blog.csdn.net/20161028152806777" alt="这里写图片描述"></p>
+<p>注释说这是系统window，一般不是由程序创建的，而在下面它给出的几类中，我们也看到了很多熟悉的身影。</p>
+<p><img src="http://img.blog.csdn.net/20161028152932700" alt="这里写图片描述"></p>
+<p>状态栏，搜索栏，Toast都是SYSTEM WINDOW</p>
+<p>这只是一个小插曲，我们回归正题，那么很明显Dialog应该是一个Application Window，不然它就不会报错了，我们从代码验证一下。</p>
+<p>讲真，我有点打脸，因为我没有找到代码，Dialog的构造函数是这样的。</p>
+<p><img src="http://img.blog.csdn.net/20161028155113014" alt="这里写图片描述"></p>
+<p>创建Window的代码在PolicyManager中，代码如下</p>
+<p><img src="http://img.blog.csdn.net/20161028155158458" alt="这里写图片描述"></p>
+<p>这里感觉有点打脸了，难道代码跟不下去了？网上查了一些资料，看到一个比较合理的解释是，因为我的源码是SDK的源码，而不是真正编译系统的源码，所以这块内容被屏蔽掉了。没关系，万能的百度说正确的代码是下面这个样子的。</p>
+<p><img src="http://img.blog.csdn.net/20161028162358849" alt="这里写图片描述"></p>
+<p>看到了静态区动态加载了Policy，这就好说了，我们去看Policy的makeNewWindow吧。</p>
+<p><img src="http://img.blog.csdn.net/20161028162517980" alt="这里写图片描述"></p>
+<p>返回的是一个PhoneWindow，我没有从代码中找到明确把PhoneWindow设置类型为TYPE_APPLICATION的地方，于是想看一下Window的默认Type是什么。</p>
+<p><img src="http://img.blog.csdn.net/20161028170422891" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161028170435500" alt="这里写图片描述"></p>
+<p><img src="http://img.blog.csdn.net/20161028170445195" alt="这里写图片描述"></p>
+<p>所以，默认type是TYPE_APPLICATION类型的。PhoneWindow也就是TYPE APPLICATION类型的。</p>
+<p>然后我们再看下一点，Dialog的Token是什么<br>Dialog的Token是null，这个可以从代码上看出来。第二个参数设置的就是token。</p>
+<p><img src="http://img.blog.csdn.net/20161028165305907" alt="这里写图片描述"></p>
+<p>只是如果View的Token是null，WindowManager又会怎么操作呢。我们从异常处反向追一下代码。前面说到了，异常是从WindowManagerService的addWindow方法报出来的，检验的是Token是否是AppToken。</p>
+<p><img src="http://img.blog.csdn.net/20161031102436168" alt="这里写图片描述"></p>
+<p>addWindow的调用链是这样的，我正向来说一下比较好理解，Dialog的show方法时，调用了mWindowManager的addView方法。</p>
+<p><img src="http://img.blog.csdn.net/20161031102800676" alt="这里写图片描述"></p>
+<p>mWindowManager的实现是WindowManagerImpl，调用的是WindowManagerGlobal的addView</p>
+<p><img src="http://img.blog.csdn.net/20161031102949037" alt="这里写图片描述"></p>
+<p>WindowManagerGlobal的addView方法调到了ViewRootImpl的setView</p>
+<p><img src="http://img.blog.csdn.net/20161031103246376" alt="这里写图片描述"></p>
+<p>然后正如前面说到的，setView方法调到了通过WindowSession调用了WindowManagerService的addWindow，检查Token并报出异常。</p>
+<p>这样就很明确了，这个token跟Dialog中的mWindowManager有关，初始化的时候已经看到mWindowManger跟Context有关。</p>
+<p><img src="http://img.blog.csdn.net/20161031103849988" alt="这里写图片描述"></p>
+<p>如果这个Context是Activity，我们看下mWindowManager是如何表现的。在Activity中，如果要获取WindowService，Activity会把自己的mWindowManager返回过去。</p>
+<p><img src="http://img.blog.csdn.net/20161031104032942" alt="这里写图片描述"></p>
+<p>而这个WindowManager的初始化是在Activity的attach方法中，从以下代码中我们看到，这个WIndowManager设置过appToken。</p>
+<p><img src="http://img.blog.csdn.net/20161031104348943" alt="这里写图片描述"></p>
+<p>否则的话，如果Dialog的Context是其他，如Application，因为这几个Context没有重写getSystemService方法，所以调用的是父类ContextWrapper中的getSystemService。</p>
+<p><img src="http://img.blog.csdn.net/20161031104822710" alt="这里写图片描述"></p>
+<p>在第二篇文章<a href="http://zwgeek.com/2016/10/25/Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E5%88%86%E6%9E%902/">Activity启动流程分析（二）</a> 中分析过，ContextWrapper中的mBase是ContextImpl类型的。</p>
+<p>ContextImpl中的getSystemtService获取的是SYSTEM_SERVICE_MAP中的Service。</p>
+<p><img src="http://img.blog.csdn.net/20161031105217598" alt="这里写图片描述"></p>
+<p>这个map中的service是在static块中放进去的</p>
+<p><img src="http://img.blog.csdn.net/20161031105401819" alt="这里写图片描述"></p>
+<p>其中也包括Window Service</p>
+<p><img src="http://img.blog.csdn.net/20161031105444244" alt="这里写图片描述"></p>
+<p>这里很简单，就是返回了一个WindowManagerImpl的实例，而我们知道WindowManagerImpl的实例中是没有AppToken的。</p>
+<p>综上所述，只有Activity的WindowManager是设置过AppToken的，所以，只有Context是Activity的时候，才能保证Dialog的show方法不返回异常。</p>
+<p>为什么创建一个Dialog一定要带AppToken呢，其实不是什么技术上有问题，而是android的一种安全措施，原因在注释中也写的很清楚。</p>
+<p><img src="http://img.blog.csdn.net/20161031113058149" alt="这里写图片描述"></p>
+<p>一个TYPE_APPLICATION类型的window必须带APPTOKEN，已区别它显示在哪个窗口上，这就限制了Dialog只能显示在创建它的Activity上，是一种安全措施。</p>
+<p>ok，之前分析文章提出的三个问题已经作答完毕。</p>
+<p>例行广告，喜欢这篇文章的同学可以关注我的博客<a href="http://zwgeek.com">http://zwgeek.com</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/uploads/wechat-reward-image.jpeg" alt="轩辕 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag">#Android</a>
+          
+            <a href="/tags/Activity启动/" rel="tag">#Activity启动</a>
+          
+            <a href="/tags/系统/" rel="tag">#系统</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/25/Activity启动流程分析2/" rel="next" title="Activity启动流程分析（二）">
+                <i class="fa fa-chevron-left"></i> Activity启动流程分析（二）
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/11/02/Activity管理结构及源码分析/" rel="prev" title="Activity的管理结构分析及源码解析">
+                Activity的管理结构分析及源码解析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+  <div class="comments" id="comments">
+  <!--PC和WAP自适应版-->
+<div id="SOHUCS" ></div> 
+<script type="text/javascript"> 
+(function(){ 
+var appid = 'cyt0SiYIG'; 
+var conf = 'prod_8b6ae98478e792e771042310b91a3839'; 
+var width = window.innerWidth || document.documentElement.clientWidth; 
+if (width < 960) { 
+window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="text/javascript" src="http://changyan.sohu.com/upload/mobile/wap-js/changyan_mobile.js?client_id=' + appid + '&conf=' + conf + '"><\/script>'); } else { var loadJs=function(d,a){var c=document.getElementsByTagName("head")[0]||document.head||document.documentElement;var b=document.createElement("script");b.setAttribute("type","text/javascript");b.setAttribute("charset","UTF-8");b.setAttribute("src",d);if(typeof a==="function"){if(window.attachEvent){b.onreadystatechange=function(){var e=b.readyState;if(e==="loaded"||e==="complete"){b.onreadystatechange=null;a()}}}else{b.onload=a}}c.appendChild(b)};loadJs("http://changyan.sohu.com/upload/changyan.js",function(){window.changyan.api.config({appid:appid,conf:conf})}); } })(); </script>
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="轩辕" />
+          <p class="site-author-name" itemprop="name">轩辕</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">18</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xuan-yuan-40-22" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zgzczzw" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/zgzczzw" target="_blank" title="CSDN">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  CSDN
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.douban.com/people/65077069/" target="_blank" title="豆瓣">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  豆瓣
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#第一个问题"><span class="nav-number">1.</span> <span class="nav-text">第一个问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#第二个问题"><span class="nav-number">2.</span> <span class="nav-text">第二个问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#第三个问题"><span class="nav-number">3.</span> <span class="nav-text">第三个问题</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Application-Window"><span class="nav-number">3.1.</span> <span class="nav-text">Application Window</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Sub-Window"><span class="nav-number">3.2.</span> <span class="nav-text">Sub Window</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#SYSTEM-WINDOW"><span class="nav-number">3.3.</span> <span class="nav-text">SYSTEM WINDOW</span></a></li></ol></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2015 - 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">轩辕</span>
+</div>
+
+<div class="powered-by">
+  <!--由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动-->
+</div>
+
+<div class="theme-info">
+  <!--主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>-->
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = true;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '' && data_content != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title < 0 && index_content < 0 ){
+                                isMatch = false;
+                            } else {
+                                if (index_content < 0) {
+                                    index_content = 0;
+                                }
+                                if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            }
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("HkzSeXgqv4E0fnYfDSnSPqlh-gzGzoHsz", "aJ6qgC0qEVu8NyCBj9zqC7Sr");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+
+
+  
+
+</body>
+</html>
