@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo,博客,阿里云," />
+  <meta name="keywords" content="TensorFlow,CNN," />
 
 
 
@@ -86,22 +86,32 @@
 
 
 
-<meta name="description" content="之前一直用github的github.io作为hexo的载体，挺好用，不花钱。但是最近风声比较紧，访问速度很慢，所以考虑把博客迁移到国内的服务器。
-国内的服务器我用的不多，说不上哪家好。这次选了阿里云，也是因为阿里云名气比较大吧。其他家的服务器也一样，除了购买流程稍有不同外，服务器到手后都是一样的了。
-购买服务器阿里云上购买服务器的流程很简单，毕竟简化购买流程才能提高转化率。">
+<meta name="description" content="背景之前文章讲了如果用 tensorflow 训练模型之后，如果对模型体积有要求，或者希望优化模型网络结构的时候，我们会调整模型的一些网络结构。但是如果证明调整后的网络结构与之前的网络结构相比的优劣性呢。
+最简单的，我们一般会跑一个准确率，那么除了这个准确率之外还有其他的指标能证明模型的优劣吗，这篇文章给大家讲下评估分类模型优劣的其他几个指标。
+名称解释举个例子，假设一个二分类模型，模型的作用是用">
 <meta property="og:type" content="article">
-<meta property="og:title" content="用自己的服务器搭建Hexo">
-<meta property="og:url" content="http://zwgeek.com/2018/01/04/用自己的服务器搭建Hexo/index.html">
+<meta property="og:title" content="分类模型优劣评估">
+<meta property="og:url" content="http://zwgeek.com/2018/04/08/分类模型优劣评估/index.html">
 <meta property="og:site_name" content="逍遥居">
-<meta property="og:description" content="之前一直用github的github.io作为hexo的载体，挺好用，不花钱。但是最近风声比较紧，访问速度很慢，所以考虑把博客迁移到国内的服务器。
-国内的服务器我用的不多，说不上哪家好。这次选了阿里云，也是因为阿里云名气比较大吧。其他家的服务器也一样，除了购买流程稍有不同外，服务器到手后都是一样的了。
-购买服务器阿里云上购买服务器的流程很简单，毕竟简化购买流程才能提高转化率。">
-<meta property="og:updated_time" content="2018-01-09T02:58:41.735Z">
+<meta property="og:description" content="背景之前文章讲了如果用 tensorflow 训练模型之后，如果对模型体积有要求，或者希望优化模型网络结构的时候，我们会调整模型的一些网络结构。但是如果证明调整后的网络结构与之前的网络结构相比的优劣性呢。
+最简单的，我们一般会跑一个准确率，那么除了这个准确率之外还有其他的指标能证明模型的优劣吗，这篇文章给大家讲下评估分类模型优劣的其他几个指标。
+名称解释举个例子，假设一个二分类模型，模型的作用是用">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_9.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_5.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_6.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_1.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_4.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_7.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_8.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_10.png">
+<meta property="og:image" content="http://alexkong.net/images/roc-and-precall.png">
+<meta property="og:updated_time" content="2018-05-11T03:45:46.939Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="用自己的服务器搭建Hexo">
-<meta name="twitter:description" content="之前一直用github的github.io作为hexo的载体，挺好用，不花钱。但是最近风声比较紧，访问速度很慢，所以考虑把博客迁移到国内的服务器。
-国内的服务器我用的不多，说不上哪家好。这次选了阿里云，也是因为阿里云名气比较大吧。其他家的服务器也一样，除了购买流程稍有不同外，服务器到手后都是一样的了。
-购买服务器阿里云上购买服务器的流程很简单，毕竟简化购买流程才能提高转化率。">
+<meta name="twitter:title" content="分类模型优劣评估">
+<meta name="twitter:description" content="背景之前文章讲了如果用 tensorflow 训练模型之后，如果对模型体积有要求，或者希望优化模型网络结构的时候，我们会调整模型的一些网络结构。但是如果证明调整后的网络结构与之前的网络结构相比的优劣性呢。
+最简单的，我们一般会跑一个准确率，那么除了这个准确率之外还有其他的指标能证明模型的优劣吗，这篇文章给大家讲下评估分类模型优劣的其他几个指标。
+名称解释举个例子，假设一个二分类模型，模型的作用是用">
+<meta name="twitter:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_9.png">
 
 
 
@@ -122,9 +132,9 @@
 
 
 
-  <link rel="canonical" href="http://zwgeek.com/2018/01/04/用自己的服务器搭建Hexo/"/>
+  <link rel="canonical" href="http://zwgeek.com/2018/04/08/分类模型优劣评估/"/>
 
-  <title> 用自己的服务器搭建Hexo | 逍遥居 </title><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+  <title> 分类模型优劣评估 | 逍遥居 </title><!-- hexo-inject:begin --><!-- hexo-inject:end -->
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -312,7 +322,7 @@
             
             
               
-                用自己的服务器搭建Hexo
+                分类模型优劣评估
               
             
           </h1>
@@ -324,8 +334,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-01-04T15:58:28+08:00" content="2018-01-04">
-              2018-01-04
+            <time itemprop="dateCreated" datetime="2018-04-08T19:17:06+08:00" content="2018-04-08">
+              2018-04-08
             </time>
           </span>
 
@@ -338,8 +348,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/曲苑杂坛/" itemprop="url" rel="index">
-                    <span itemprop="name">曲苑杂坛</span>
+                  <a href="/categories/AI/" itemprop="url" rel="index">
+                    <span itemprop="name">AI</span>
                   </a>
                 </span>
 
@@ -358,7 +368,7 @@
 
           
           
-             <span id="/2018/01/04/用自己的服务器搭建Hexo/" class="leancloud_visitors" data-flag-title="用自己的服务器搭建Hexo">
+             <span id="/2018/04/08/分类模型优劣评估/" class="leancloud_visitors" data-flag-title="分类模型优劣评估">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -380,9 +390,82 @@
       
 
       
-        <p>之前一直用github的github.io作为hexo的载体，挺好用，不花钱。但是最近风声比较紧，访问速度很慢，所以考虑把博客迁移到国内的服务器。</p>
-<p>国内的服务器我用的不多，说不上哪家好。这次选了阿里云，也是因为阿里云名气比较大吧。其他家的服务器也一样，除了购买流程稍有不同外，服务器到手后都是一样的了。</p>
-<h4 id="购买服务器"><a href="#购买服务器" class="headerlink" title="购买服务器"></a>购买服务器</h4><p>阿里云上购买服务器的流程很简单，毕竟简化购买流程才能提高转化率。</p>
+        <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>之前文章讲了如果用 tensorflow 训练模型之后，如果对模型体积有要求，或者希望优化模型网络结构的时候，我们会调整模型的一些网络结构。但是如果证明调整后的网络结构与之前的网络结构相比的优劣性呢。</p>
+<p>最简单的，我们一般会跑一个准确率，那么除了这个准确率之外还有其他的指标能证明模型的优劣吗，这篇文章给大家讲下评估分类模型优劣的其他几个指标。</p>
+<h2 id="名称解释"><a href="#名称解释" class="headerlink" title="名称解释"></a>名称解释</h2><p>举个例子，假设一个二分类模型，模型的作用是用来区分一堆数据中真的数据和假的数据。</p>
+<p>假设一共有 22 个数据，22 个数据中真数据有 12 个，假数据有 10 个。而分类模型认为其中 8 个数据是真的，当然，这 8 个数据中有 5 个是真的，而另外 3 个是假的，却被模型错误的认为是真的。如下图所示：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_9.png" alt=""></p>
+<p>那让我们定义以下概念：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">TP = 5</div><div class="line">FP = 3</div><div class="line"></div><div class="line">TN = 7</div><div class="line">FN = 7</div></pre></td></tr></table></figure>
+<h3 id="真正率、真阳率、灵敏度"><a href="#真正率、真阳率、灵敏度" class="headerlink" title="真正率、真阳率、灵敏度"></a>真正率、真阳率、灵敏度</h3><p>真正率（true positive rate, TPR），真阳率，灵敏度（sensitivity），指的是被模型预测的正样本的比例：</p>
+<p>TPR = TP / (TP + FN)</p>
+<p>在例子中指的是 5/12</p>
+<p>这个比例高适合于那些需要“宁可错杀一千，不可放过一个”的模型，比如地震预测，地震预测错多次也没关系，重要的是真的发生地震的时候一定要预测出来。</p>
+<h3 id="真负率、特异度"><a href="#真负率、特异度" class="headerlink" title="真负率、特异度"></a>真负率、特异度</h3><p>真负率（true negative rate, TNR），特异度（specificity），指的是被模型正确预测的负样本的比例：</p>
+<p>TNR = TN / (TN + FP)</p>
+<p>在例子中是 7/10</p>
+<p>这个比例高适合于那些需要“不能冤枉一个好人”的业务模型，比如预测一些人是否罪犯，宁可放过一些罪犯，也不能冤枉一个好人。</p>
+<h3 id="假正率、假阳率"><a href="#假正率、假阳率" class="headerlink" title="假正率、假阳率"></a>假正率、假阳率</h3><p>假正率（false positive rate, FPR），假阳率，指的是被模型错误预测的正样本比例：</p>
+<p>FPR = FP / (TN + FP)</p>
+<p>在例子中指的是 3/10</p>
+<h3 id="假负率"><a href="#假负率" class="headerlink" title="假负率"></a>假负率</h3><p>假负率（false negative rete, FNT），指的是被模型错误预测的负样本的比例：</p>
+<p>FNR = FN / (TP + FN)</p>
+<p>在例子中指的是 7/12</p>
+<h3 id="精确度、精度、查准率"><a href="#精确度、精度、查准率" class="headerlink" title="精确度、精度、查准率"></a>精确度、精度、查准率</h3><p>精度（precision）指的是模型查出来的所有数据中，有多少是准的。</p>
+<p>p = TP / (TP + FP)</p>
+<p>在例子中指的是 5/8</p>
+<h3 id="召回率、查全率、真正率、真阳率、灵敏度"><a href="#召回率、查全率、真正率、真阳率、灵敏度" class="headerlink" title="召回率、查全率、真正率、真阳率、灵敏度"></a>召回率、查全率、真正率、真阳率、灵敏度</h3><p>召回率（recall）指的是所有对的数据中，有多少能被模型查出来。但其实召回率就是前面提到的真阳率。</p>
+<p>r = TP / (TP + FN)</p>
+<p>在例子中指的是 5/12</p>
+<h3 id="F1"><a href="#F1" class="headerlink" title="F1"></a>F1</h3><p>F1分数（F1 Score），又被称为平衡F分数（balanced F Score），是一个兼顾精确率和召回率的调和平均数。定义如下：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_5.png" alt=""></p>
+<p>但如果你的模型对精确率和召回率考虑的权重不一样时，可以定义 F-β 分数如下：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_6.png" alt=""></p>
+<p>当 β 为 1 是，召回率和精确率的权重一样，也就是 F-1 分数。当 β 大于 1 时，召回率的权重高于精确率，如 F-2 分数。当 β 小于 1 时，精确率的权重高于召回率，如 F-0.5 分数。</p>
+<h3 id="ROC"><a href="#ROC" class="headerlink" title="ROC"></a>ROC</h3><p>ROC全称受试者工作特征曲线（receiver operating characteristic curve），又称为感受性曲线（sensitivity curve）。绘制方式是以假阳率（FPR）为横坐标，以真阳率为（TPR）为纵坐标，对于模型输出的特征值，以不同的阈值进行划分，得到曲线。</p>
+<p>举个简单的例子：</p>
+<p>假设 5 个数据点，模型输出的特征值分别是</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]</div></pre></td></tr></table></figure>
+<p>其中前 5 个数据点为负，后 5 个数据点为正，也就是说，10 个数据的标签时如下形式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">[0, 0, 0, 0, 0, 1, 1, 1, 1, 1]</div></pre></td></tr></table></figure>
+<p>那么，当我的阈值分别取以下值的时候</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">[1.  0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1]</div></pre></td></tr></table></figure>
+<p>假阳率和真阳率分别是以下值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">假阳率：[0.  0.  0.  0.  0.  0.2 0.4 0.6 0.8 1. ]</div><div class="line">真阳率：[0.2 0.4 0.6 0.8 1.  1.  1.  1.  1.  1. ]</div></pre></td></tr></table></figure>
+<p>按照 ROC 的定义，得到的曲线如图</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_1.png" alt=""></p>
+<p>在 ROC 曲线中，左上角的点代表取这个阈值的时候，假阳率最低，真阳率最高，是最佳阈值，上图中的最佳阈值是 0.6。</p>
+<h3 id="AUC"><a href="#AUC" class="headerlink" title="AUC"></a>AUC</h3><p>AUC（Area Under Curve）被定义为 ROC 曲线下的面积，顾名思义。这个值存在的意义是开发者希望用一个定量的数字来表示模型的性能。</p>
+<p>由上图可知，AUC 的取值范围在 0 到 1 ，越大越好。但 AUC 小于 0.5 的模型我们认为是没有意义的，分类效果太差。</p>
+<p>上图中的 AUC 是 1。</p>
+<h3 id="PRC"><a href="#PRC" class="headerlink" title="PRC"></a>PRC</h3><p>PRC（Precision Recall Curve），精度召回率曲线，以召回率（查全率）为横坐标，精度（查准率）为纵坐标，和 RPC 类似，对于模型输出的特征值，以不同的阈值进行划分，得到曲线。</p>
+<p>还是上面那个例子，5 个数据点，模型输出的特征值分别是</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]</div></pre></td></tr></table></figure>
+<p>其中前 5 个数据点为负，后 5 个数据点为正，也就是说，10 个数据的标签时如下形式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">[0, 0, 0, 0, 0, 1, 1, 1, 1, 1]</div></pre></td></tr></table></figure>
+<p>那么，当我的阈值分别取以下值的时候</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">[0.6 0.7 0.8 0.9 1]</div></pre></td></tr></table></figure>
+<p>假阳率和真阳率分别是以下值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">查全率（召回率）：[1.  0.8 0.6 0.4 0.2 0. ]</div><div class="line">查准率（精度）：[1. 1. 1. 1. 1. 1.]</div></pre></td></tr></table></figure>
+<p>绘制的曲线如图</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_4.png" alt=""></p>
+<p>在 PRC 曲线中，最右上角的点，查全率和查准率都最高，也就是最佳阈值，在这个例子中，是 0.6（在这个例子中 ROC 曲线和 PRC 曲线得到的最佳阈值是同一个数，但并不总是这样）。</p>
+<h3 id="损失函数曲线"><a href="#损失函数曲线" class="headerlink" title="损失函数曲线"></a>损失函数曲线</h3><p>损失函数曲线（Loss Curve），是以训练次数为横轴，以当次的损失率为纵轴绘制的曲线。</p>
+<h6 id="损失函数"><a href="#损失函数" class="headerlink" title="损失函数"></a>损失函数</h6><p>关于损失函数的定义可以参考其他机器学习教程，这里就不细说了，简单来说，是如下定义：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_7.png" alt=""></p>
+<p>这里的 X，Y 并不是变量，而是常量，指的是 n 个样本及 n 个样本的标签值。损失函数是一个关于 f(x) 中参数的公式。</p>
+<p>每次训练后，在训练集和交叉验证集（或测试集）上分别跑下损失函数的值，大概是一个如下的曲线：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_8.png" alt=""></p>
+<p>这个曲线可以显示欠拟合和过拟合的程度，从上面曲线可以看出来，在训练集上，损失函数值是逐渐趋于0的，而在验证集上损失函数在下降一段时间后开始上升，这说明出现了过拟合。</p>
+<p>MNIST 问题中的 Loss 曲线</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/%E5%88%86%E7%B1%BB%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8A%A3%E8%AF%84%E4%BC%B0/Snip20180511_10.png" alt=""></p>
+<p>可以看出一直没有出现过拟合的情况</p>
+<h2 id="ROC和PRC曲线比较"><a href="#ROC和PRC曲线比较" class="headerlink" title="ROC和PRC曲线比较"></a>ROC和PRC曲线比较</h2><p>ROC 曲线有个很好的特性：当测试集中的正负样本的分布变化的时候，ROC 曲线能够保持不变。在实际的数据集中经常会出现类不平衡（class imbalance）现象，即负样本比正样本多很多（或者相反），而且测试数据中的正负样本的分布也可能随着时间变化。下图是 ROC 曲线和 Precision-Recall 曲线的对比：</p>
+<p><img src="http://alexkong.net/images/roc-and-precall.png" alt=""></p>
+<p>在上图中，(a) 和 (c) 为ROC曲线，(b) 和 (d) 为Precision-Recall曲线。(a) 和 (b) 展示的是分类其在原始测试集（正负样本分布平衡）的结果，(c) 和 (d) 是将测试集中负样本的数量增加到原来的 10 倍后，分类器的结果。可以明显的看出，ROC 曲线基本保持原貌，而 Precision-Recall 曲线则变化较大。</p>
+<p>也就是 PRC 曲线会面临一个问题，当需要获得更高 recall 时，model 需要输出更多的样本，precision 可能会伴随出现下降/不变/升高，得到的曲线会出现浮动差异（出现锯齿），无法像 ROC 一样保证单调性。</p>
+<p>结论：AUC 用得比较多的一个重要原因是，实际环境中正负样本极不均衡，PR 曲线无法很好反映出分类器性能，而 ROC 受此影响小。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>以上各个指标都不能全面的覆盖分类器的各种性能，在实际应用中，应该合理的组合使用以上指标来判断分类器的效果。</p>
 
       
     </div>
@@ -421,11 +504,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/Hexo/" rel="tag">#Hexo</a>
+            <a href="/tags/TensorFlow/" rel="tag">#TensorFlow</a>
           
-            <a href="/tags/博客/" rel="tag">#博客</a>
-          
-            <a href="/tags/阿里云/" rel="tag">#阿里云</a>
+            <a href="/tags/CNN/" rel="tag">#CNN</a>
           
         </div>
       
@@ -434,16 +515,16 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/05/09/Proguard指南/" rel="next" title="Proguard指南">
-                <i class="fa fa-chevron-left"></i> Proguard指南
+              <a href="/2018/01/08/基于LinkMap分析iOSAPP各模块体积/" rel="next" title="基于LinkMap分析iOSAPP各模块体积">
+                <i class="fa fa-chevron-left"></i> 基于LinkMap分析iOSAPP各模块体积
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2018/01/08/基于LinkMap分析iOSAPP各模块体积/" rel="prev" title="基于LinkMap分析iOSAPP各模块体积">
-                基于LinkMap分析iOSAPP各模块体积 <i class="fa fa-chevron-right"></i>
+              <a href="/2018/04/08/Tensorflow入门/" rel="prev" title="TensorFlow入门1-CNN网络及MNIST例子讲解">
+                TensorFlow入门1-CNN网络及MNIST例子讲解 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -540,7 +621,7 @@ window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="tex
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">18</span>
+              <span class="site-state-item-count">19</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -557,7 +638,7 @@ window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="tex
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">37</span>
+                <span class="site-state-item-count">36</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
@@ -631,7 +712,7 @@ window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="tex
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#购买服务器"><span class="nav-number">1.</span> <span class="nav-text">购买服务器</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#名称解释"><span class="nav-number">2.</span> <span class="nav-text">名称解释</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#真正率、真阳率、灵敏度"><span class="nav-number">2.1.</span> <span class="nav-text">真正率、真阳率、灵敏度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#真负率、特异度"><span class="nav-number">2.2.</span> <span class="nav-text">真负率、特异度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#假正率、假阳率"><span class="nav-number">2.3.</span> <span class="nav-text">假正率、假阳率</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#假负率"><span class="nav-number">2.4.</span> <span class="nav-text">假负率</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#精确度、精度、查准率"><span class="nav-number">2.5.</span> <span class="nav-text">精确度、精度、查准率</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#召回率、查全率、真正率、真阳率、灵敏度"><span class="nav-number">2.6.</span> <span class="nav-text">召回率、查全率、真正率、真阳率、灵敏度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#F1"><span class="nav-number">2.7.</span> <span class="nav-text">F1</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ROC"><span class="nav-number">2.8.</span> <span class="nav-text">ROC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AUC"><span class="nav-number">2.9.</span> <span class="nav-text">AUC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PRC"><span class="nav-number">2.10.</span> <span class="nav-text">PRC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#损失函数曲线"><span class="nav-number">2.11.</span> <span class="nav-text">损失函数曲线</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#损失函数"><span class="nav-number">2.11.0.0.1.</span> <span class="nav-text">损失函数</span></a></li></ol></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ROC和PRC曲线比较"><span class="nav-number">3.</span> <span class="nav-text">ROC和PRC曲线比较</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
             
           </div>
         </section>

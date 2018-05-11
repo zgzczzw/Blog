@@ -1,5 +1,5 @@
 ---
-title: 用自己的服务器搭建Hexo
+title: [编辑中...] 用自己的服务器搭建Hexo
 date: 2018-01-04 15:58:28
 tags:
   - Hexo

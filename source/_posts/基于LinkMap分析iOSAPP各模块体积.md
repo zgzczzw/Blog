@@ -75,7 +75,7 @@ Arch指的是这个LinkMap对应的架构
 
 Object files是编译后生成的文件列表，比如这个程序class都编译成了.o文件，像我们比较熟悉的AppDelegate.o文件等等。还有引进来的几个库，比如UIKit.tbd。
 
-##### Sections
+#### Sections
 ```
 # Sections:
 # Address	Size    	Segment	Section

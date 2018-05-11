@@ -1,0 +1,1264 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="TensorFlow,CNN," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="逍遥居" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="1. 前言人工智能自从阿尔法狗大败李世石后就异常火爆，最近工作中需要探索 AI 在移动端的应用，趁着这个计划入门下深度学习吧。
+深度学习的入门曲线还是很陡峭的，看了很多资料，询问了从事相关工作的朋友后终于有点感觉了，这篇文章就讲一下我在这个过程中的所见所得吧，肯定是不专业的，如果所说有什么错误，也希望大家帮忙指出，共同进步。
+这个入门的文章准备分以下几个部分来说：
+
+CNN 的原理
+TensorF">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TensorFlow入门1-CNN网络及MNIST例子讲解">
+<meta property="og:url" content="http://zwgeek.com/2018/04/08/Tensorflow入门/index.html">
+<meta property="og:site_name" content="逍遥居">
+<meta property="og:description" content="1. 前言人工智能自从阿尔法狗大败李世石后就异常火爆，最近工作中需要探索 AI 在移动端的应用，趁着这个计划入门下深度学习吧。
+深度学习的入门曲线还是很陡峭的，看了很多资料，询问了从事相关工作的朋友后终于有点感觉了，这篇文章就讲一下我在这个过程中的所见所得吧，肯定是不专业的，如果所说有什么错误，也希望大家帮忙指出，共同进步。
+这个入门的文章准备分以下几个部分来说：
+
+CNN 的原理
+TensorF">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/1.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/2.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/3.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180503_1.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/4.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/5.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/6.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/7.gif">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/8.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/10.jpeg">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/11.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/12.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/13.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180423_2.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180423_3.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180423_4.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180423_5.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180423_3.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180423_6.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180427_1.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_2.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_3.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_4.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_5.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_6.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_7.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_8.png">
+<meta property="og:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_9.png">
+<meta property="og:updated_time" content="2018-05-04T11:29:25.481Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="TensorFlow入门1-CNN网络及MNIST例子讲解">
+<meta name="twitter:description" content="1. 前言人工智能自从阿尔法狗大败李世石后就异常火爆，最近工作中需要探索 AI 在移动端的应用，趁着这个计划入门下深度学习吧。
+深度学习的入门曲线还是很陡峭的，看了很多资料，询问了从事相关工作的朋友后终于有点感觉了，这篇文章就讲一下我在这个过程中的所见所得吧，肯定是不专业的，如果所说有什么错误，也希望大家帮忙指出，共同进步。
+这个入门的文章准备分以下几个部分来说：
+
+CNN 的原理
+TensorF">
+<meta name="twitter:image" content="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/1.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: undefined,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://zwgeek.com/2018/04/08/Tensorflow入门/"/>
+
+  <title> TensorFlow入门1-CNN网络及MNIST例子讲解 | 逍遥居 </title><!-- hexo-inject:begin --><!-- hexo-inject:end -->
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <!-- hexo-inject:begin --><!-- hexo-inject:end --><script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?3dacdfd5ec97423055f59e8df9a09690";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+  <script>
+    (function(){
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';        
+      }
+      else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">逍遥居</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup">
+ <span class="search-icon fa fa-search"></span>
+ <input type="text" id="local-search-input">
+ <div id="local-search-result"></div>
+ <span class="popup-btn-close">close</span>
+</div>
+
+
+    </div>
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                TensorFlow入门1-CNN网络及MNIST例子讲解
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2018-04-08T19:17:06+08:00" content="2018-04-08">
+              2018-04-08
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index">
+                    <span itemprop="name">AI</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+             <span id="/2018/04/08/Tensorflow入门/" class="leancloud_visitors" data-flag-title="TensorFlow入门1-CNN网络及MNIST例子讲解">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1. 前言"></a>1. 前言</h2><p>人工智能自从阿尔法狗大败李世石后就异常火爆，最近工作中需要探索 AI 在移动端的应用，趁着这个计划入门下深度学习吧。</p>
+<p>深度学习的入门曲线还是很陡峭的，看了很多资料，询问了从事相关工作的朋友后终于有点感觉了，这篇文章就讲一下我在这个过程中的所见所得吧，肯定是不专业的，如果所说有什么错误，也希望大家帮忙指出，共同进步。</p>
+<p>这个入门的文章准备分以下几个部分来说：</p>
+<ul>
+<li>CNN 的原理</li>
+<li>TensorFlow 使用 CNN 网络解决 MNIST 问题的例子讲解</li>
+<li>Demo 改造解决我自己的股票图片识别问题</li>
+<li>训练出的模型部署到 iOS 端的 TensorFlow Mobile 框架中</li>
+<li>训练出的模型部署到 iOS 端的 TensorFlow Lite 框架中</li>
+</ul>
+<p>首先我做的第一件事是分清楚一些概念，之前完全不懂得时候只觉得人工智能很厉害，能解决人力解决不了的问题，但人工智能到底是什么，完全不知道。既然要学习，首先就得分清楚人工智能，机器学习，深度学习都是些什么东西，需要从哪里入手等等这些问题。这个问了从事相关工作的同学后再查阅了一些资料后，很容易的就理解了。知乎上的这个回答比较靠谱，<a href="https://www.zhihu.com/question/57770020" target="_blank" rel="external">传送门</a>，总结一下就是这两句话。</p>
+<blockquote>
+<p>机器学习：一种实现人工智能的方法</p>
+<p>深度学习：一种实现机器学习的技术</p>
+</blockquote>
+<p>而三者的关系就是</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/1.png" alt="这里写图片描述"></p>
+<p>可以看的出来，人工智能是一个很大的概念，想用机器来解决问题的一种思想都可以认为是人工智能，而这个概念早在 19 世纪 50 年代就提出了。机器学习就是实现人工智能的一种方法，一切使用数据分析帮助决策的场景都可以叫做机器学习，这个概念从 19 世纪 80 年代到现在也已经发展了快 40 年了，机器学习其实一点都不神秘，在现代生产中的应用随处可见，比如各种网站的推荐算法，垃圾邮件的过滤算法等等。而最近火热的概念其实人工智能中很小的一部分，叫做深度学习。简单来说，使用深度神经网络去解决问题的学习方法叫做深度学习。如果说广义的机器学习是人类定义好规则，让计算机去做，那么深度学习就是人类定义好规则后，让计算机去学。深度学习依赖于现在计算能力的提升飞速发展，在图像识别、语音识别等领域发挥了巨大的作用。看完这篇文章后，你应该对深度学习会有一个简单的理解。</p>
+<p>考虑到机器学习的算法实在是太多，学习需要很多时间（按照我粗浅的理解，机器学习就是一整部统计学在计算机界的应用，很大）。而深度学习就相对单纯一些，据我所知，目前比较流行的深度学习算法就只有 CNN（卷积神经网络），RNN（循环神经网络）和 DNN（深度神经网络）。DNN 是整个深度学习的基础，后面的 CNN 和 RNN 其实都是基于DNN来做的，CNN（卷积神经网络）比较擅长于提取图片特征，处理图像问题。RNN 是把前一次网络的输出作为下一次网络的输入，让整个网络有了前因后果的概念，比较擅长处理有前后时间序列关系的问题，比如语音识别，语义分析等。</p>
+<p>根据之前列的大纲，这篇文章会先讲一下 CNN 网络的概念，然后讲一下 TensorFlow 中一个很有用的例子，用 CNN 网络去解决 MNIST 问题。大纲中剩下的部分会在接下来的文章中讲解。</p>
+<h2 id="2-CNN神经网络"><a href="#2-CNN神经网络" class="headerlink" title="2. CNN神经网络"></a>2. CNN神经网络</h2><p>CNN 神经网络，全称是卷积神经网络，是目前深度学习中最常见、应用最广泛的一种网络，适合于解决图像识别，图片分类，图像预测的问题。</p>
+<p>这里有一篇讲 CNN 比较好的文章，我看到很多大V讲到 CNN 的时候也会引用这篇文章的内容。有兴趣可以先看一下这篇文章。</p>
+<p><a href="https://ujjwalkarn.me/2016/08/11/intuitive-explanation-convnets/" target="_blank" rel="external">An Intuitive Explanation of Convolutional Neural Networks</a></p>
+<p><a href="http://www.hackcv.com/index.php/archives/104/?hmsr=toutiao.io&amp;utm_medium=toutiao.io&amp;utm_source=toutiao.io" target="_blank" rel="external">译文：什么是卷积神经网络？为什么它们很重要？</a></p>
+<p>如果不考虑 CNN，可以先思考下一个自己去实现一个分类图片的程序会怎么做。我之前做了一个判断一张图片是否是自选股截图的程序，自选股截图指的是下面这种图片。</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/2.png" alt="这里写图片描述"></p>
+<p>首先我会去看这种图片有什么特征，很明显，自选股截图上面有规则的红绿方块，而其他图片是没有的。那么在程序中，我首先提取出图片的各个像素值，然后去查找这张图片中是否有这种红绿色块，查找红绿色块的算法，可以这样做，看红色的像素值的坐标是否是一个方块，或者绿色的像素值的坐标是否是一个方块。</p>
+<p>由上所知，一个典型的图片分类算法就是提取特征，比较特征。CNN 网络简单来说就是将这个过程自动化，开发人员不需要告诉网络图片的特征是什么，CNN 网络可以自动的从图片中寻找特征，并记录。这个过程是怎么做到的呢，下面来讲。</p>
+<p>输入一张图片，网络通过一系列的运算，提取出图片的特征。如下图所示：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/3.png" alt="这里写图片描述"></p>
+<p>当然，这中间的一系列计算是有算法和参数的。训练的时候我们会给每张图片打上一个对应的标签，CNN 通过上面一系列计算出特征后，每个特征就对应着一个标签。比如</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">特征1 -&gt; 标签A </div><div class="line">特征2 -&gt; 标签B </div><div class="line">特征3 -&gt; 标签A</div></pre></td></tr></table></figure>
+<p>当下一张图进入训练时，CNN 网络仍然以上次训练计算出来的参数去提取特征，假如提取出的是特征 2，如果图片的标签是 B，那么证明参数正确，无需调整。如果提取出的是特征 2，但是图片的标签是 A，那么证明参数不准确，需要调整下参数。调整完参数后继续下次训练，以此类推，直到参数大概率准确的时候。</p>
+<p>很简单的去解释了 CNN 卷积神经网络是怎么工作的，当然实际的过程比这要复杂的多，提取特征需要一些算法，比如卷积、池化、激活，算法的参数也不是 1 个这么简单，而是几百万个。下面的文章中基于 TensorFlow 中一个很简单的例子 MNIST 问题的代码来讲一下 CNN 网络是怎样工作的。</p>
+<h2 id="3-MNIST问题"><a href="#3-MNIST问题" class="headerlink" title="3. MNIST问题"></a>3. MNIST问题</h2><p>MNIST 问题就相当于图像处理的 Hello World 程序，在 TensorFlow 的官方教程里已经有一个完整的 Demo。</p>
+<p><a href="http://www.tensorfly.cn/tfdoc/tutorials/mnist_beginners.html" target="_blank" rel="external">MNIST问题处理</a></p>
+<p>MNIST 问题是很常见的图片分类问题，训练集是已经编码过的手写图片，图片中是手写的 0~9 的数字，模型经过训练后，输入一张图片，可以输出 0~9 的数字。</p>
+<h3 id="3-1-输入集"><a href="#3-1-输入集" class="headerlink" title="3.1 输入集"></a>3.1 输入集</h3><p>首先我们来看一下 MNIST 问题的输入集，数据集的介绍<a href="http://yann.lecun.com/exdb/mnist/" target="_blank" rel="external">传送门</a>。</p>
+<p>整个数据集由以下四个文件构成，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">//训练集-图片数据</div><div class="line">train-images-idx3-ubyte.gz:  training set images (9912422 bytes) </div><div class="line">//训练集-label数据</div><div class="line">train-labels-idx1-ubyte.gz:  training set labels (28881 bytes) </div><div class="line">//测试集-图片数据</div><div class="line">t10k-images-idx3-ubyte.gz:   test set images (1648877 bytes) </div><div class="line">//测试集-label数据</div><div class="line">t10k-labels-idx1-ubyte.gz:   test set labels (4542 bytes)</div></pre></td></tr></table></figure>
+<p>训练集-图片数据的格式如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">[offset] [type]          [value]          [description] </div><div class="line">0000     32 bit integer  0x00000803(2051) magic number </div><div class="line">0004     32 bit integer  60000            number of images </div><div class="line">0008     32 bit integer  28               number of rows </div><div class="line">0012     32 bit integer  28               number of columns </div><div class="line">0016     unsigned byte   ??               pixel </div><div class="line">0017     unsigned byte   ??               pixel </div><div class="line">........ </div><div class="line">xxxx     unsigned byte   ??               pixel</div></pre></td></tr></table></figure>
+<p>训练集-label 数据的格式如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">[offset] [type]          [value]          [description] </div><div class="line">0000     32 bit integer  0x00000801(2049) magic number (MSB first) </div><div class="line">0004     32 bit integer  60000            number of items </div><div class="line">0008     unsigned byte   ??               label </div><div class="line">0009     unsigned byte   ??               label </div><div class="line">........ </div><div class="line">xxxx     unsigned byte   ??               label</div><div class="line">The labels values are 0 to 9.</div></pre></td></tr></table></figure>
+<p>测试集的数据格式和训练集是一样的。</p>
+<p>首先我们写个程序试着解析一下这些数据：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div></pre></td><td class="code"><pre><div class="line">#coding=utf-8</div><div class="line">import os</div><div class="line">import struct</div><div class="line">import numpy as np</div><div class="line">import matplotlib.pyplot as plt</div><div class="line"></div><div class="line"></div><div class="line">def load_mnist(path, kind=&apos;train&apos;):</div><div class="line">    # 读取文件</div><div class="line">    labels_path = os.path.join(path,</div><div class="line">                               &apos;%s-labels-idx1-ubyte&apos;</div><div class="line">                               % kind)</div><div class="line">    images_path = os.path.join(path,</div><div class="line">                               &apos;%s-images-idx3-ubyte&apos;</div><div class="line">                               % kind)</div><div class="line">    with open(labels_path, &apos;rb&apos;) as lbpath:</div><div class="line">        # 读取magic numer，labels数量</div><div class="line">        magic, n = struct.unpack(&apos;&gt;II&apos;,</div><div class="line">                                 lbpath.read(8))</div><div class="line">        print &apos;label magic : &apos;,</div><div class="line">        print magic</div><div class="line">        # 载入label数据</div><div class="line">        labels = np.fromfile(lbpath,</div><div class="line">                             dtype=np.uint8).reshape(n, 1)</div><div class="line"></div><div class="line">    with open(images_path, &apos;rb&apos;) as imgpath:</div><div class="line">        # 读取magic numer，图片数量，图片宽，高</div><div class="line">        magic, num, rows, cols = struct.unpack(&apos;&gt;IIII&apos;,</div><div class="line">                                               imgpath.read(16))</div><div class="line">        print &apos;image magic : &apos;,</div><div class="line">        print magic</div><div class="line">        # 载入图片数据</div><div class="line">        images = np.fromfile(imgpath,</div><div class="line">                             dtype=np.uint8).reshape(num, rows * cols)</div><div class="line"></div><div class="line">    return images, labels, rows, cols</div><div class="line"></div><div class="line"></div><div class="line">def show_image():</div><div class="line">    images, labels, rows, cols = load_mnist(&apos;/tmp/TensorFlow/mnist/input_data/&apos;)</div><div class="line">    fig, ax = plt.subplots(</div><div class="line">        nrows=2,</div><div class="line">        ncols=5,</div><div class="line">        sharex=True,</div><div class="line">        sharey=True, )</div><div class="line"></div><div class="line">    ax = ax.flatten()</div><div class="line">    for i in range(10):</div><div class="line">        img = images[i].reshape(rows, cols)</div><div class="line">        print labels[i]</div><div class="line">        ax[i].imshow(img, cmap=&apos;Greys&apos;, interpolation=&apos;nearest&apos;)</div><div class="line"></div><div class="line">    ax[0].set_xticks([])</div><div class="line">    ax[0].set_yticks([])</div><div class="line">    plt.tight_layout()</div><div class="line">    plt.show()</div><div class="line"></div><div class="line"></div><div class="line">if __name__ == &apos;__main__&apos;:</div><div class="line">  show_image()</div></pre></td></tr></table></figure>
+<p>运行程序后，会显示输入集的前 10 张图片，如下图所示：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180503_1.png" alt=""></p>
+<p>在控制台会输出 labels</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">label magic :  2049</div><div class="line">image magic :  2051</div><div class="line">[5] [0] [4] [1] [9] [2] [1] [3] [1] [4]</div></pre></td></tr></table></figure>
+<p>这是一个 CNN 模型需要的典型的输入，有一些数据，每个数据都有一个 label。后面我们做自己项目的时候，也是这种数据格式。</p>
+<p>因为 MNIST 问题是个比较典型的问题，所以 TensorFlow 甚至封装了解析的方法。</p>
+<h3 id="3-2-MNIST问题代码解析"><a href="#3-2-MNIST问题代码解析" class="headerlink" title="3.2 MNIST问题代码解析"></a>3.2 MNIST问题代码解析</h3><p>完整的代码在 TensorFlow 的 /TensorFlow/git/TensorFlow/TensorFlow/examples/tutorials/mnist/mnist_deep.py 里面。</p>
+<p>我们根据程序的运行顺序来看一下。</p>
+<h4 id="3-2-1-读取数据"><a href="#3-2-1-读取数据" class="headerlink" title="3.2.1 读取数据"></a>3.2.1 读取数据</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">if __name__ == &apos;__main__&apos;:</div><div class="line">  # 解析命令行参数，默认没有</div><div class="line">  parser = argparse.ArgumentParser()</div><div class="line">  # 添加MNIST数据集的下载地址</div><div class="line">  parser.add_argument(&apos;--data_dir&apos;, type=str,</div><div class="line">                      default=&apos;/tmp/TensorFlow/mnist/input_data&apos;,</div><div class="line">                      help=&apos;Directory for storing input data&apos;)</div><div class="line">  FLAGS, unparsed = parser.parse_known_args()</div><div class="line">  # 运行main方法</div><div class="line">  tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># Import data</div><div class="line">mnist = input_data.read_data_sets(FLAGS.data_dir)</div></pre></td></tr></table></figure>
+<p>代码将 MNIST 的下载和解析过程封装了一次，看下 read_data_sets 方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">def read_data_sets(train_dir,</div><div class="line">                   fake_data=False,</div><div class="line">                   one_hot=False,</div><div class="line">                   dtype=dtypes.float32,</div><div class="line">                   reshape=True,</div><div class="line">                   validation_size=5000,</div><div class="line">                   seed=None,</div><div class="line">                   source_url=DEFAULT_SOURCE_URL):</div><div class="line">                   ...</div><div class="line">                   return base.Datasets(train=train, validation=validation, test=test)</div></pre></td></tr></table></figure>
+<p>这个方法最后返回的是一个 Datasets 格式，里面 train，validation 和 test 都是已经解析好的数据，解析方法就类似于上一节讲到的。</p>
+<p>读到这里，你可能有个疑问，MNIST 数据里面只有 train 和 test，那验证数据集 validation 是哪里来的。这里 validation 使用的就是 train 数据集。CNN 网络在每次训练完之后运行 validation 数据集，可以让开发者了解目前的准确度，在所有训练结束之后运行 test 数据集，可以知道训练出的这个模型的准确度。所以运行 validation 数据只是给开发者参考用的，这里对数据的要求不是很严苛，可以直接用 train 的数据集，而最后测试模型的准确度时使用的 test 数据集一定不能是 train 里面的数据，因为如果两个数据集有重合，可能无法准确的测试模型的准确度。</p>
+<h4 id="3-2-2-定义输入输出"><a href="#3-2-2-定义输入输出" class="headerlink" title="3.2.2 定义输入输出"></a>3.2.2 定义输入输出</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"># Create the model</div><div class="line">x = tf.placeholder(tf.float32, [None, 784], name=&quot;x&quot;)</div><div class="line"></div><div class="line"># Define loss and optimizer</div><div class="line">y_ = tf.placeholder(tf.int64, [None])</div></pre></td></tr></table></figure>
+<p>tf.placeholder 可以理解为定义占位符，这些占位符虽然定义的时候没有值，但在实际运行中会给定输入值。这里定义了两个占位符，一个是输入值 x，类型是浮点数，维度是 [None, 784]，None 代表不确定数量，784 代表 28*28，也就是一张 MNIST 输入集的图片，这里的意思是说输入层x可以是不确定数量的图片，代表着我们这个网络可以同时输入多张图片的数据。这种变量就是 TensorFlow 的张量 tensor，而每个 tensor 都可以指定名称，但是我们一般只指定具有代表性的几个 tensor 的名称，比如这个输入节点的名称是 x。</p>
+<p>而 y_ 声明的存储 label 的变量，类型是 int 类型，因为 label 是 1-10，也是不确定数量的，因为前面x输入多少图片，这里的 label 就应该有多少数量。</p>
+<p>声明一个变量为什么要如此复杂，为什么不能像我们写程序一样直接声明 float x = 5 这样。这里需要给读者讲解一下 TensorFlow 计算图和静态图的概念。训练一个深度学习网络的时候，是需要大量计算的，而深度学习框架为了加快计算速度，会直接把计算的过程扔给 CPU 或 GPU 去运行，CPU 和 GPU 运行结束后返回框架结果。举个简单的例子，如果我们要计算 3*5+2，普通的程序是先计算 3*5，得到结果之后再 +2，得到结果。如果 TensorFlow 也这样做的话，相当于让 CPU 算 3*5， CPU 算完后返回结果，然后把返回的结果和 2 再扔给 CPU 去算，最后得到结果。但是需要知道的是，每一次和CPU的交互其实都是特别浪费时间的，所以如果像普通的程序一样，那训练神经网络会特别耗时。所以有一些深度学习框架像 TensorFlow 提出了静态图的概念，首先定义好整个计算图，放在前面的例子里，就是定义好“先乘后加”，然后将需要计算的数字和这个计算图扔给 CPU，最后 CPU 会计算出一个最终的结果返回给框架，这样整个过程中框架和CPU只有一次交互。这样做可以提升计算的速度，但是有一个致命的缺点是不能调试，你不能在 3*5 之后打个断点看看结果对不对，你只能知道最后的结果是不是正确。</p>
+<p>所以 tf.placeholder 只是定义了整个计算图中的一个节点 tensor，所以必须用TensorFlow 定义 tensor 的语法。</p>
+<h4 id="3-2-3-定义计算图"><a href="#3-2-3-定义计算图" class="headerlink" title="3.2.3 定义计算图"></a>3.2.3 定义计算图</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># Build the graph for the deep net</div><div class="line">  y_conv = deepnn(x)</div></pre></td></tr></table></figure>
+<p>deepnn 这个方法是整个程序的核心，在这个方法中定义了一整个计算图。我们一层一层的看。这个 CNN 的网络用的是LeNet网络。构成是这样的。</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/4.png" alt="这里写图片描述"></p>
+<p>其中有两层卷积层，两层池化层，最后输出层是两层全连接层。代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div></pre></td><td class="code"><pre><div class="line">def deepnn(x):</div><div class="line">  &quot;&quot;&quot;deepnn builds the graph for a deep net for classifying digits.</div><div class="line"></div><div class="line">  Args:</div><div class="line">    x: an input tensor with the dimensions (N_examples, 784), where 784 is the</div><div class="line">    number of pixels in a standard MNIST image.</div><div class="line"></div><div class="line">  Returns:</div><div class="line">    A tuple (y, keep_prob). y is a tensor of shape (N_examples, 10), with values</div><div class="line">    equal to the logits of classifying the digit into one of 10 classes (the</div><div class="line">    digits 0-9). keep_prob is a scalar placeholder for the probability of</div><div class="line">    dropout.</div><div class="line">  &quot;&quot;&quot;</div><div class="line">  # Reshape to use within a convolutional neural net.</div><div class="line">  # Last dimension is for &quot;features&quot; - there is only one here, since images are</div><div class="line">  # grayscale -- it would be 3 for an RGB image, 4 for RGBA, etc.</div><div class="line">  with tf.name_scope(&apos;reshape&apos;):</div><div class="line">    x_image = tf.reshape(x, [-1, 28, 28, 1])</div><div class="line"></div><div class="line">  # First convolutional layer - maps one grayscale image to 32 feature maps.</div><div class="line">  with tf.name_scope(&apos;conv1&apos;):</div><div class="line">    W_conv1 = weight_variable([5, 5, 1, 32])</div><div class="line">    b_conv1 = bias_variable([32])</div><div class="line">    h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)</div><div class="line"></div><div class="line">  # Pooling layer - downsamples by 2X.</div><div class="line">  with tf.name_scope(&apos;pool1&apos;):</div><div class="line">    h_pool1 = max_pool_2x2(h_conv1)</div><div class="line"></div><div class="line">  # Second convolutional layer -- maps 32 feature maps to 64.</div><div class="line">  with tf.name_scope(&apos;conv2&apos;):</div><div class="line">    W_conv2 = weight_variable([5, 5, 32, 64])</div><div class="line">    b_conv2 = bias_variable([64])</div><div class="line">    h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)</div><div class="line"></div><div class="line">  # Second pooling layer.</div><div class="line">  with tf.name_scope(&apos;pool2&apos;):</div><div class="line">    h_pool2 = max_pool_2x2(h_conv2)</div><div class="line"></div><div class="line">  # Fully connected layer 1 -- after 2 round of downsampling, our 28x28 image</div><div class="line">  # is down to 7x7x64 feature maps -- maps this to 1024 features.</div><div class="line">  with tf.name_scope(&apos;fc1&apos;):</div><div class="line">    W_fc1 = weight_variable([7 * 7 * 64, 1024])</div><div class="line">    b_fc1 = bias_variable([1024])</div><div class="line"></div><div class="line">    h_pool2_flat = tf.reshape(h_pool2, [-1, 7 * 7 * 64])</div><div class="line">    h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)</div><div class="line"></div><div class="line">  # Map the 1024 features to 10 classes, one for each digit</div><div class="line">  with tf.name_scope(&apos;fc2&apos;):</div><div class="line">    W_fc2 = weight_variable([1024, 10])</div><div class="line">    b_fc2 = bias_variable([10])</div><div class="line"></div><div class="line">    y_conv = tf.add(tf.matmul(h_fc1, W_fc2), b_fc2, name=&quot;output&quot;)</div><div class="line">  return y_conv</div></pre></td></tr></table></figure>
+<p>下面一层一层的看这个网络是怎么工作的。</p>
+<h5 id="卷积层"><a href="#卷积层" class="headerlink" title="卷积层"></a>卷积层</h5><p>CNN 叫卷积神经网络，可以看出卷积是这个网络的核心。卷积层是用于提取图片特征，卷积的操作是用一个卷积矩阵（也叫卷积核）在输入矩阵上依次扫描，做矩阵相乘，得到的结果输入矩阵的某一个特征。这样讲是不太好理解，下面用图片说一下这个过程。</p>
+<p>假设输入矩阵是这样的<br><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/5.png" alt="这里写图片描述"></p>
+<p>选取如下一个卷积核<br><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/6.png" alt="这里写图片描述"></p>
+<p>用卷积核在输入矩阵上依次扫过，做矩阵相乘的操作，就可以得到输入矩阵由这个卷积核提取的特征。</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/7.gif" alt="这里写图片描述"></p>
+<blockquote>
+<p>在 CNN 的术语中，3x3 的矩阵叫做“滤波器（filter）”或者“核（kernel）”或者“特征检测器（feature detector）”，通过在图像上滑动滤波器并计算点乘得到矩阵叫做“卷积特征（Convolved Feature）”或者“激活图（Activation Map）”或者“特征图（Feature Map）”。记住滤波器在原始输入图像上的作用是特征检测器。</p>
+</blockquote>
+<p>是不是在怀疑，这种操作真的能够提取特征吗，看下对实际图片进行卷积操作的例子。</p>
+<p>输入图像如下：<br><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/8.png" alt="这里写图片描述"></p>
+<p>用不同的卷积核进行卷积操作的结果如下：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/10.jpeg" alt="这里写图片描述"></p>
+<p>可以看到，不同的卷积核对原图像进行处理后可以得到不同的特征图像，有的卷积核能提取边缘信息，有的卷积核能提取色彩信息，有的卷积核能提取明暗特征，等等等等。有没有觉得这一步特别像 PS 中的滤镜，其实卷积的操作和滤镜的操作是很类似的。不同的卷积就像不同的滤镜对不同的特征敏感度不同。而代码中的卷积层如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"># First convolutional layer - maps one grayscale image to 32 feature maps.</div><div class="line">  with tf.name_scope(&apos;conv1&apos;):</div><div class="line">    W_conv1 = weight_variable([5, 5, 1, 32])</div><div class="line">    b_conv1 = bias_variable([32])</div><div class="line">    h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)</div></pre></td></tr></table></figure>
+<p>首先定义一个卷积核 W_conv1 变量，由于后面会多次定义变量，所以将定义变量的部分提取了方法，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">def weight_variable(shape):</div><div class="line">  &quot;&quot;&quot;weight_variable generates a weight variable of a given shape.&quot;&quot;&quot;</div><div class="line">  initial = tf.truncated_normal(shape, stddev=0.1)</div><div class="line">  return tf.Variable(initial)</div></pre></td></tr></table></figure>
+<p>tf.Variable 生成一个变量 tensor，参数 initial 是初始化值。initial 由truncated_normal 方法生成，shape 指定了生成变量的维度，这里是[5,5,1,32]四维的变量，初始化值是由 truncated_normal 产生的正态分布的值，这就是 truncated_normal 方法的作用，详细的说明可以看文档。</p>
+<p>相对于卷积核的声明，偏量 b_conv1 的生成要简单一点。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">def bias_variable(shape):</div><div class="line">  &quot;&quot;&quot;bias_variable generates a bias variable of a given shape.&quot;&quot;&quot;</div><div class="line">  initial = tf.constant(0.1, shape=shape)</div><div class="line">  return tf.Variable(initial)</div></pre></td></tr></table></figure>
+<p>初始化值是固定的 0.1。<br>这两个变量的初始化值不能是 0，而要加入一些脏值，是为了打破对称性以及避免 0 梯度，提升模型训练的效率。</p>
+<p>后面的代码就是执行卷积操作，我们来看，</p>
+<p><code>conv2d(x_image, W_conv1)</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">def conv2d(x, W):</div><div class="line">  &quot;&quot;&quot;conv2d returns a 2d convolution layer with full stride.&quot;&quot;&quot;</div><div class="line">  return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding=&apos;SAME&apos;)</div></pre></td></tr></table></figure>
+<p>这个函数就是 TensorFlow 中用于做卷积的函数，2d 代表生成的是一个二维特征图，这个是什么意思呢，后面会提到。除了 conv2d，还有 conv1d 和 conv3d 函数。</p>
+<p>看下 conv2d 的函数签名。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">tf.nn.conv2d(input, filter, strides, padding, use_cudnn_on_gpu=None, name=None)</div></pre></td></tr></table></figure>
+<p>除去 name 参数用以指定该操作的 name，与方法有关的一共五个参数：</p>
+<p>第一个参数 input：指需要做卷积的输入图像，它要求是一个 tensor，具有 [batch, in_height, in_width, in_channels] 这样的 shape，具体含义是[训练时一个 batch 的图片数量, 图片高度, 图片宽度, 图像通道数]，注意这是一个 4 维的 tensor，要求类型为 float32 和 float64 其中之一</p>
+<p>第二个参数 filter：相当于 CNN 中的卷积核，它要求是一个 tensor，具有 [filter_height, filter_width, in_channels, out_channels] 这样的shape，具体含义是[卷积核的高度，卷积核的宽度，图像通道数，卷积核个数]，要求类型与参数 input 相同，有一个地方需要注意，第三维 in_channels，就是参数 input 的第四维</p>
+<p>第三个参数 strides：卷积时在图像每一维每一次移动的步长，这是一个一维的向量，长度跟前面卷积核的维度相同，这里是4。</p>
+<p>第四个参数 padding：string 类型的量，只能是 “SAME”, “VALID” 其中之一，这个值决定了不同的卷积方式</p>
+<p>第五个参数：use_cudnn_on_gpu: bool 类型，是否使用 cudnn 加速，默认为 true，cudnn 是英伟达的GPU处理单元，这里也就是用 GPU 进行加速计算。</p>
+<h6 id="二维特征向量"><a href="#二维特征向量" class="headerlink" title="二维特征向量"></a>二维特征向量</h6><p>conv2d 生成的是二维特征向量，conv2d 有两个参数是必要的，input 和 filter。我们的输入参数是一张图片，三维的数据[宽，高，颜色空间]，为了最后向量相乘的结果是二维的，filer 的第三个维度应该和 input 的第四个维度相等，也就是 in_channels 相等，这样永远都只能输出一个二维的特征向量，也就是这个函数叫 conv2d 的原因，这里比较难理解，可以仔细考虑一下。</p>
+<h6 id="padding参数"><a href="#padding参数" class="headerlink" title="padding参数"></a>padding参数</h6><p>padding 参数的可选值是 SAME 和 VALID，这个参数影响了了卷积核对输入矩阵边缘的处理，决定了输出的特征向量大小。</p>
+<p>卷积核和按照步数一步步的扫描输入矩阵，做乘法操作。但是在输入矩阵的边缘，如果输入矩阵剩余的维度小于定义的卷积核的维度，那么卷积核就无法做乘法操作了，剩余这部分边界怎么处理呢。</p>
+<p>如果 padding 是 SAME，则会在输入矩阵的两端补齐 0，使补齐后的输入矩阵维度刚好可以被卷积核处理，最后得到的特征矩阵和原来的输入矩阵维度相同。</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/11.png" alt="这里写图片描述"></p>
+<p>如果 padding 是 VALID，则会抛弃边界的节点，最后输出的特征矩阵维度和输入矩阵不相同</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/12.png" alt="这里写图片描述"></p>
+<p>再回来看代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">W_conv1 = weight_variable([5, 5, 3, 32])</div><div class="line">conv2d(x_image, W_conv1)</div></pre></td></tr></table></figure>
+<p>卷积核是 5*5*3 的，一共 32 个卷积核，对图像处理后，可以得到32个特征向量，因为我们没有指定步长和 padding，所以步长默认是1，padding 是 SAME，这样的话，输出的特征矩阵就是28 <em> 28 </em> 1。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"># 第一个卷积层，从图像中提取32的特征</div><div class="line">with tf.name_scope(&apos;conv1&apos;):</div><div class="line">    W_conv1 = weight_variable([5, 5, 3, 32])  # y =wX+b</div><div class="line">    b_conv1 = bias_variable([32])</div><div class="line">    h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)</div></pre></td></tr></table></figure>
+<p>做完了卷积后，进行了一个relu处理</p>
+<blockquote>
+<p>ReLU 是一个元素级别的操作（应用到各个像素），并将特征图中的所有小于 0 的像素值设置为零。ReLU 的目的是在 ConvNet 中引入非线性，因为在大部分的我们希望 ConvNet 学习的实际数据是非线性的（卷积是一个线性操作——元素级别的矩阵相乘和相加，所以我们需要通过使用非线性函数 ReLU 来引入非线性。</p>
+</blockquote>
+<p>引入非线性可以让神经网络更好的工作，这个更好的工作指的是在做反向传播的时候避免出现梯度消失的问题，原因涉及到比较深的理论，这篇文章就不多说了。</p>
+<p>这样第一个卷积操作就结束了。</p>
+<h5 id="池化"><a href="#池化" class="headerlink" title="池化"></a>池化</h5><p>卷积操作之后是一个池化层。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"># Pooling layer - downsamples by 2X.</div><div class="line">  with tf.name_scope(&apos;pool1&apos;):</div><div class="line">    h_pool1 = max_pool_2x2(h_conv1)</div></pre></td></tr></table></figure>
+<p>池化的作用类似于压缩，这种压缩是在缩小输入值的维度的同时还要保持输入值的特征。比如在 2*2 的 4 个像素点中取最大值，最小值或者平均值。不过经过研究，最大池化能够比较好的保持原来的特征值。</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/13.png" alt="这里写图片描述"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"># 2*2的最大化池化层</div><div class="line">    with tf.name_scope(&apos;pool1&apos;):</div><div class="line">        h_pool1 = max_pool_2x2(h_conv1)</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">def max_pool_2x2(x):</div><div class="line">  &quot;&quot;&quot;max_pool_2x2 downsamples a feature map by 2X.&quot;&quot;&quot;</div><div class="line">  return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],</div><div class="line">                        strides=[1, 2, 2, 1], padding=&apos;SAME&apos;)</div></pre></td></tr></table></figure>
+<p>池化操作也是调用的 TensorFlow 的函数，参数 strides 和 padding 跟前面提到的 conv2d 函数的参数一致。ksize 是定义的在每个维度上池化的大小，上一步卷积之后，输出的特征向量是 1*28*28*1，所以在中间两个维度进行处理。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"># Second convolutional layer -- maps 32 feature maps to 64.</div><div class="line">  with tf.name_scope(&apos;conv2&apos;):</div><div class="line">    W_conv2 = weight_variable([5, 5, 32, 64])</div><div class="line">    b_conv2 = bias_variable([64])</div><div class="line">    h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)</div><div class="line"></div><div class="line">  # Second pooling layer.</div><div class="line">  with tf.name_scope(&apos;pool2&apos;):</div><div class="line">    h_pool2 = max_pool_2x2(h_conv2)</div></pre></td></tr></table></figure>
+<p>后面又做了一个卷积操作和一个池化操作，这个跟前面的操作是一样的。卷积操作的输出不影响输入值的维度，但是影响输入值的深度。池化操作不影响输入值的深度但是影响输入值的维度，经过两层的卷积和 2<em>2 的池化后，输入值的维度变成了原来的 1/4。深度变成 64。也就是 7\</em>7*64。</p>
+<p>上面的几层又叫隐藏层，表示使用者看不到的处理层。</p>
+<h5 id="全连接"><a href="#全连接" class="headerlink" title="全连接"></a>全连接</h5><p>接下来是输出层，输出层是两个全连接层。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"># Fully connected layer 1 -- after 2 round of downsampling, our 28x28 image</div><div class="line"># is down to 7x7x64 feature maps -- maps this to 1024 features.</div><div class="line">with tf.name_scope(&apos;fc1&apos;):</div><div class="line">  W_fc1 = weight_variable([7 * 7 * 64, 1024])</div><div class="line">  b_fc1 = bias_variable([1024])</div><div class="line"></div><div class="line">  h_pool2_flat = tf.reshape(h_pool2, [-1, 7 * 7 * 64])</div><div class="line">  h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)</div><div class="line"></div><div class="line"># Map the 1024 features to 10 classes, one for each digit</div><div class="line">with tf.name_scope(&apos;fc2&apos;):</div><div class="line">  W_fc2 = weight_variable([1024, 10])</div><div class="line">  b_fc2 = bias_variable([10])</div><div class="line"></div><div class="line">  y_conv = tf.add(tf.matmul(h_fc1, W_fc2), b_fc2, name=&quot;output&quot;)</div></pre></td></tr></table></figure>
+<p>全连接层，顾名思义，指的是这一层的每个节点都跟上一层的全部节点有连接。</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180423_2.png" alt="全连接节点"></p>
+<p>比如图中全连接层的节点 a1 与上一层的所有节点 x1,x2,x3 有联系，a2 也与上一层的所有节点有联系，就这样，少一个也不行。因此解释全连接层的时候，图就是这样一个网状结构。</p>
+<p>上文中提到了联系，这里的“联系”具体指的是什么呢。如图所示，假设 x1，x2，x3 是全连接层的输入值，那么在全连接层的a1可以表示为以下的形式。</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180423_3.png" alt=""></p>
+<p>从这个公式可以看出，a1 与 x1，x2，x3 都有联系，只是输入节点的权重值不同。同理，a2 和 a3 也可以表示为以下的形式。</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180423_4.png" alt=""></p>
+<p>由此就可以从数学层面去理解什么叫全连接层，但是这个全连接层在实际应用中表示得意义是什么呢，简单来说，它可以作为一个分类网络，还是上面那个图，输入层是 3 个值，全连接层是 3 个节点，就代表这个全连接层可以把上一层的特征值分类为三种特征。当然，输入层和全连接层的节点数并不一定相同，比如下面这个结构。</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180423_5.png" alt=""></p>
+<p>最后的全连接层是 10 个节点，全连接层的上一层是 15 个特征值，这样就把 15 个特征值归类为 10 种特征。举例来说，比如输出的 15 个特征标记位 t1-15，而 t1，t3，t5 三种特征可以认为都属于某一种输出 o1。而 t2，t6 两种特征可以认为属于输出 o2，以此类推，就可以把15个特征分类为 10 个输出。</p>
+<p>前面提到的MNIST问题中，全连接层有两层，第一层是 1024 个节点，第二层是 10 个节点。一般情况下，最靠近用户的输出层就是用户所期待的结果类别数，MNIST 问题中，用户期待的输出是 0-9 一共 10 个数字也就是 10 种类别，所以第二层全连接层是 10 个节点。再往前看，卷积层在每一个像素点上提取 64 个特征值，所以整个图片可以有高*宽*64个特征值，也就是 7*7*64 个特征，第一个全连接层是 1024 个节点，表示希望这个网络将这 7*7*64 个特征归类为 1024 个分类。至于为什么第一个连接层是 1024 个节点，是一个经验值的问题，这个节点的个数是可以调整的，后面会讲到全连接层对模型体积的影响，也会再说到这个经验值的问题。那么全连接层是如何分类的。一起来看一下。</p>
+<p>回顾一下全连接层的表示公式。</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180423_3.png" alt=""></p>
+<p>这里的输入值 x1,x2,x3…，输出值 a1 和权重 W，偏移量 b 到底指的是什么呢。</p>
+<p>在MNIST的基础上，可以考虑这样一种情况。看下面这个图，对于0这个数字来说，我们经过训练之后，认为如果一张图片在中间红色部分出现了像素值，那这张图有一定概率不是 0，并且出现在红色部分的像素值越多，不是 0 的概率越大。如果在周围一圈的蓝色部分出现了像素值，那么这张图有一定概率是 0，并且出现在蓝色部分的像素值越多，是 0 的概率越大。</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180423_6.png" alt=""></p>
+<p>这个过程用数学公式怎么表示呢，蓝色部分拥有正值的权重，红色部分拥有负值的权重，将输入图片的每个像素点与权重值进行相乘后求和，这样如果红色部分出现的像素值越多，则最后的和越小，如果蓝色部分出现的像素值越多，则最后的和越大。最后得出的结果我们称为是输入图片x是这种分类（比如分类0）的证据 evidence。这样对于一张输入的图片，最后落在每个节点上的 evidence 就可以用如下的公式表示。</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180427_1.png" alt=""></p>
+<p>看这个公式，是不是就是全连接层的公式。所以全连接层这个过程比较绕，但是是深度学习网络的基本原理，可以仔细理解一下。</p>
+<p>反过来看代码。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"># Fully connected layer 1 -- after 2 round of downsampling, our 28x28 image</div><div class="line"># is down to 7x7x64 feature maps -- maps this to 1024 features.</div><div class="line">with tf.name_scope(&apos;fc1&apos;):</div><div class="line">  W_fc1 = weight_variable([7 * 7 * 64, 1024])</div><div class="line">  b_fc1 = bias_variable([1024])</div><div class="line"></div><div class="line">  h_pool2_flat = tf.reshape(h_pool2, [-1, 7 * 7 * 64])</div><div class="line">  h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)</div></pre></td></tr></table></figure>
+<p>首先生成全连接层的权重 W_fc1 和偏量 b_fc1，这里复用了前面卷积操作生成卷积核和偏量的两个方法，虽然概念不同，但计算是相通的，所以可以复用。tf.reshape(h_pool2, [-1, 7 <em> 7 </em> 64]) 将之前层的四维 [1,7,7,64] 的输出变成一个一维的向量，因为全连接层只能处理一维的问题。后面用 tf.matmul 向量乘法实现了全连接层的操作。tf.nn.relu 和前面一样，是个激活函数。</p>
+<h5 id="droupout"><a href="#droupout" class="headerlink" title="droupout"></a>droupout</h5><p>在第一层全连接层之后，加了一个 dropout 的操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"># Dropout - controls the complexity of the model, prevents co-adaptation of</div><div class="line"># features.</div><div class="line">with tf.name_scope(&apos;dropout&apos;):</div><div class="line">  keep_prob = tf.placeholder(tf.float32)</div><div class="line">  h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)</div></pre></td></tr></table></figure>
+<p>droupout 的操作如下图所示：<br><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_2.png" alt=""></p>
+<p>在计算的过程中，随机的“丢弃”一些节点，简单来说，h_fc1有 1024 个节点，在 droupout 之后，如果 keep_prob 是50%，那么经过 droupout 之后，可以认为参与计算的是 512 个节点。droupout 有两个优势。</p>
+<ul>
+<li>解决过拟合的问题</li>
+<li>在训练中加入概率性</li>
+</ul>
+<p>droupout 操作之后又是一层全连接。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"># Map the 1024 features to 10 classes, one for each digit</div><div class="line">with tf.name_scope(&apos;fc2&apos;):</div><div class="line">  W_fc2 = weight_variable([1024, 10])</div><div class="line">  b_fc2 = bias_variable([10])</div><div class="line"></div><div class="line">  y_conv = tf.add(tf.matmul(h_fc1, W_fc2), b_fc2, name=&quot;output&quot;)</div></pre></td></tr></table></figure>
+<p>第二层全连接将上一层产生的 1024 个节点归类到 10 个节点上，，得到最后的输出。即使经过 droupout 之后，实体依然是 1024 个节点，只是其中一部分不再参与计算。这个网络结构最后的输出是10个节点的 evidence 的值。</p>
+<h4 id="3-2-4-Softmax回归处理"><a href="#3-2-4-Softmax回归处理" class="headerlink" title="3.2.4 Softmax回归处理"></a>3.2.4 Softmax回归处理</h4><p>至此，整个计算图就定义完了，接下来定义一些训练中的必要单元来告知框架如何训练。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">with tf.name_scope(&apos;loss&apos;):</div><div class="line">  cross_entropy = tf.losses.sparse_softmax_cross_entropy(</div><div class="line">      labels=y_, logits=y_conv)</div><div class="line">cross_entropy = tf.reduce_mean(cross_entropy)</div></pre></td></tr></table></figure>
+<p>定义损失函数使用 softmax 交叉熵的，关于 softmax 和交叉熵，这里引用<a href="https://blog.csdn.net/chaipp0607/article/details/73392175" target="_blank" rel="external">传送门</a>一段描述。</p>
+<p>神经网络的原始输出不是一个概率值，实质上只是输入的数值做了复杂的加权和与非线性处理之后的一个值而已，那么如何将这个输出变为概率分布？ </p>
+<p>这就是 softmax 层的作用，假设神经网络的原始输出为 y1,y2,….,yn，那么经过 softmax 回归处理之后的输出为： </p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_3.png" alt=""></p>
+<p>经过 softmax 的公式后，所有节点的和变成了 1，之前神经网络输出的每个节点的权重值变成了每个节点的概率值。</p>
+<p>单个节点的输出变成的一个概率值，经过 softmax 处理后结果作为神经网络最后的输出。label</p>
+<h4 id="3-2-5-交叉熵的原理"><a href="#3-2-5-交叉熵的原理" class="headerlink" title="3.2.5 交叉熵的原理"></a>3.2.5 交叉熵的原理</h4><p>交叉熵刻画的是实际输出（概率）与期望输出（概率）的距离，也就是交叉熵的值越小，两个概率分布就越接近。假设概率分布 p 为期望输出，概率分布 q 为实际输出，H(p,q) 为交叉熵，则：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_4.png" alt=""></p>
+<p>这个公式如何表征距离呢，举个例子：<br>假设 N=3，期望输出为 p = (1,0,0)，实际输出 q1 = (0.5,0.2,0.3)，q2 = (0.8,0.1,0.1)，那么：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_5.png" alt=""></p>
+<p>很显然，q2 与 p 更为接近，它的交叉熵也更小。<br>除此之外，交叉熵还有另一种表达形式，还是使用上面的假设条件：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_6.png" alt=""></p>
+<p>其结果为：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_7.png" alt=""></p>
+<p>以上的所有说明针对的都是单个样例的情况，而在实际的使用训练过程中，数据往往是组合成为一个 batch 来使用，所以对用的神经网络的输出应该是一个 m*n 的二维矩阵，其中 m 为 batch 的个数，n为分类数目，而对应的 label 也是一个二维矩阵，还是拿上面的数据，组合成一个 batch=2 的矩阵：</p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_8.png" alt=""></p>
+<p>所以交叉熵的结果应该是一个列向量（根据第一种方法）： </p>
+<p><img src="https://zgzczzw-blog-image.oss-cn-beijing.aliyuncs.com/Tensorflow%E5%85%A5%E9%97%A8/Snip20180504_9.png" alt=""></p>
+<p>而对于一个 batch，最后取平均为 0.2。</p>
+<p>tf.losses.sparse_softmax_cross_entropy 是 TensorFlow 将以上两个过程封装后的产物，最后的结果是一个 batch 的概率值，reduce_mean 用来取得概率的平均值。综上作为整个网络的损失函数。</p>
+<h4 id="3-2-6-训练方法-梯度下降"><a href="#3-2-6-训练方法-梯度下降" class="headerlink" title="3.2.6 训练方法-梯度下降"></a>3.2.6 训练方法-梯度下降</h4><p>然后定义梯度下降的方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">with tf.name_scope(&apos;adam_optimizer&apos;):</div><div class="line">  train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)</div></pre></td></tr></table></figure>
+<p>以下降步速，即学习率为1e-4的速度最小化损失函数 cross_entropy。这样就能定义训练的目的是为了让损失函数越来越来，每次参数的变化值为1e-4。</p>
+<h4 id="3-2-7-准确度"><a href="#3-2-7-准确度" class="headerlink" title="3.2.7 准确度"></a>3.2.7 准确度</h4><p>定义准确度的计算方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">with tf.name_scope(&apos;accuracy&apos;):</div><div class="line">  correct_prediction = tf.equal(tf.argmax(y_conv, 1), y_)</div><div class="line">  correct_prediction = tf.cast(correct_prediction, tf.float32)</div><div class="line">accuracy = tf.reduce_mean(correct_prediction)</div></pre></td></tr></table></figure>
+<p>y_conv 是网络输出的原始结果，也就是图片在最后 10 个节点上的权重值，比如 [314, -423, 342…] ，最后权重值最大的节点是我们的期望节点，比如这里第三个节点的权重值最大，那这幅图片可能就是数字 2，tf.argmax 是取出权重值最大的下标。y_ 是我们给的 label 值，把这两个值相比较得出准确度。最后依然用 tf.reduce_mean 算出 batch 的平均准确度。</p>
+<h4 id="3-2-8-计算图可视化"><a href="#3-2-8-计算图可视化" class="headerlink" title="3.2.8 计算图可视化"></a>3.2.8 计算图可视化</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">graph_location = tempfile.mkdtemp()</div><div class="line">print(&apos;Saving graph to: %s&apos; % graph_location)</div><div class="line">train_writer = tf.summary.FileWriter(graph_location)</div><div class="line">train_writer.add_graph(tf.get_default_graph())</div></pre></td></tr></table></figure>
+<p>这是 TensorFlow 提供的计算图可视化的方法，这里暂时没起到作用。</p>
+<h4 id="3-2-9-启动计算图"><a href="#3-2-9-启动计算图" class="headerlink" title="3.2.9 启动计算图"></a>3.2.9 启动计算图</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">with tf.Session() as sess:</div><div class="line">  sess.run(tf.global_variables_initializer())</div><div class="line">  for i in range(20000):</div><div class="line">    batch = mnist.train.next_batch(50)</div><div class="line">    if i % 100 == 0:</div><div class="line">      train_accuracy = accuracy.eval(feed_dict=&#123;</div><div class="line">          x: batch[0], y_: batch[1], keep_prob: 1.0&#125;)</div><div class="line">      print(&apos;step %d, training accuracy %g&apos; % (i, train_accuracy))</div><div class="line">    train_step.run(feed_dict=&#123;x: batch[0], y_: batch[1], keep_prob: 0.5&#125;)</div><div class="line"></div><div class="line">  print(&apos;test accuracy %g&apos; % accuracy.eval(feed_dict=&#123;</div><div class="line">      x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0&#125;))</div></pre></td></tr></table></figure>
+<p>这里就是前面提到的将计算图和计算数据给 CPU 计算，TensorFlow 将和 CPU 的一个交互过程定义为 session，启动 session 后，开始运行。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sess.run(tf.global_variables_initializer())</div></pre></td></tr></table></figure>
+<p>首先将前面定义的所有变量初始化，注意前面在定义图的时候只是定义了变量初始化的方法，而没有真正去做初始化，真正运行是在这个地方。</p>
+<p>然后循环 20000 次，每次从训练集中取出50个图片数据作为一个 batch。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">train_step.run(feed_dict=&#123;x: batch[0], y_: batch[1], keep_prob: 0.5&#125;)</div></pre></td></tr></table></figure>
+<p>开始训练，train_step 是前面定义的梯度下降的方法，以这种方法开始训练。参数是图片数据，正确的 labels，和 droupout 的参数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">if i % 100 == 0:</div><div class="line">        train_accuracy = accuracy.eval(feed_dict=&#123;</div><div class="line">            x: batch[0], y_: batch[1], keep_prob: 1.0&#125;)</div><div class="line">        print(&apos;step %d, training accuracy %g&apos; % (i, train_accuracy))</div></pre></td></tr></table></figure>
+<p>每训练 100 次，输出一下当前的准确率，是为了开发者感知的。测试准确率的时候，是不需要 droupout 操作的，所以 keep_prob 是1。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">print(&apos;test accuracy %g&apos; % accuracy.eval(feed_dict=&#123;</div><div class="line">        x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0&#125;))</div></pre></td></tr></table></figure>
+<p>20000 次训练之后，输出最终的准确率。</p>
+<p>输出结果类似这样的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">step 0, training accuracy 0.16</div><div class="line">step 100, training accuracy 0.9</div><div class="line">step 200, training accuracy 0.94</div><div class="line">step 300, training accuracy 0.9</div><div class="line">step 400, training accuracy 0.96</div><div class="line">...</div><div class="line">test accuracy 0.9446</div></pre></td></tr></table></figure>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>至此，整个模型的训练过程就完全结束了。通过这个例子，我们知道了一个 CNN 网络是怎么工作的，并且如何用 TensorFlow 来实现一个 CNN 网络。下一篇文章，我将写一下如果改造这个例子，来解决我的一个实际问题。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+  <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+    <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+    <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+      <span>赏</span>
+    </button>
+    <div id="QR" style="display: none;">
+      
+        <div id="wechat" style="display: inline-block">
+          <img id="wechat_qr" src="/uploads/wechat-reward-image.jpeg" alt="轩辕 WeChat Pay"/>
+          <p>微信打赏</p>
+        </div>
+      
+      
+    </div>
+  </div>
+
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/TensorFlow/" rel="tag">#TensorFlow</a>
+          
+            <a href="/tags/CNN/" rel="tag">#CNN</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/04/08/分类模型优劣评估/" rel="next" title="分类模型优劣评估">
+                <i class="fa fa-chevron-left"></i> 分类模型优劣评估
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+  <a class="jiathis_button_tsina"></a>
+  <a class="jiathis_button_tqq"></a>
+  <a class="jiathis_button_weixin"></a>
+  <a class="jiathis_button_cqq"></a>
+  <a class="jiathis_button_douban"></a>
+  <a class="jiathis_button_renren"></a>
+  <a class="jiathis_button_qzone"></a>
+  <a class="jiathis_button_kaixin001"></a>
+  <a class="jiathis_button_copy"></a>
+  <a href="http://www.jiathis.com/share" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+  <a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+  var jiathis_config={
+    hideMore:false
+  }
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+  <div class="comments" id="comments">
+  <!--PC和WAP自适应版-->
+<div id="SOHUCS" ></div> 
+<script type="text/javascript"> 
+(function(){ 
+var appid = 'cyt0SiYIG'; 
+var conf = 'prod_8b6ae98478e792e771042310b91a3839'; 
+var width = window.innerWidth || document.documentElement.clientWidth; 
+if (width < 960) { 
+window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="text/javascript" src="http://changyan.sohu.com/upload/mobile/wap-js/changyan_mobile.js?client_id=' + appid + '&conf=' + conf + '"><\/script>'); } else { var loadJs=function(d,a){var c=document.getElementsByTagName("head")[0]||document.head||document.documentElement;var b=document.createElement("script");b.setAttribute("type","text/javascript");b.setAttribute("charset","UTF-8");b.setAttribute("src",d);if(typeof a==="function"){if(window.attachEvent){b.onreadystatechange=function(){var e=b.readyState;if(e==="loaded"||e==="complete"){b.onreadystatechange=null;a()}}}else{b.onload=a}}c.appendChild(b)};loadJs("http://changyan.sohu.com/upload/changyan.js",function(){window.changyan.api.config({appid:appid,conf:conf})}); } })(); </script>
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpg"
+               alt="轩辕" />
+          <p class="site-author-name" itemprop="name">轩辕</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">19</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">36</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/xuan-yuan-40-22" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zgzczzw" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/zgzczzw" target="_blank" title="CSDN">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  CSDN
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.douban.com/people/65077069/" target="_blank" title="豆瓣">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  豆瓣
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-前言"><span class="nav-number">1.</span> <span class="nav-text">1. 前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-CNN神经网络"><span class="nav-number">2.</span> <span class="nav-text">2. CNN神经网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-MNIST问题"><span class="nav-number">3.</span> <span class="nav-text">3. MNIST问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-输入集"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 输入集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-MNIST问题代码解析"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 MNIST问题代码解析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-1-读取数据"><span class="nav-number">3.2.1.</span> <span class="nav-text">3.2.1 读取数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-2-定义输入输出"><span class="nav-number">3.2.2.</span> <span class="nav-text">3.2.2 定义输入输出</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-3-定义计算图"><span class="nav-number">3.2.3.</span> <span class="nav-text">3.2.3 定义计算图</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#卷积层"><span class="nav-number">3.2.3.1.</span> <span class="nav-text">卷积层</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#二维特征向量"><span class="nav-number">3.2.3.1.1.</span> <span class="nav-text">二维特征向量</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#padding参数"><span class="nav-number">3.2.3.1.2.</span> <span class="nav-text">padding参数</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#池化"><span class="nav-number">3.2.3.2.</span> <span class="nav-text">池化</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#全连接"><span class="nav-number">3.2.3.3.</span> <span class="nav-text">全连接</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#droupout"><span class="nav-number">3.2.3.4.</span> <span class="nav-text">droupout</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-4-Softmax回归处理"><span class="nav-number">3.2.4.</span> <span class="nav-text">3.2.4 Softmax回归处理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-5-交叉熵的原理"><span class="nav-number">3.2.5.</span> <span class="nav-text">3.2.5 交叉熵的原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-6-训练方法-梯度下降"><span class="nav-number">3.2.6.</span> <span class="nav-text">3.2.6 训练方法-梯度下降</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-7-准确度"><span class="nav-number">3.2.7.</span> <span class="nav-text">3.2.7 准确度</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-8-计算图可视化"><span class="nav-number">3.2.8.</span> <span class="nav-text">3.2.8 计算图可视化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-9-启动计算图"><span class="nav-number">3.2.9.</span> <span class="nav-text">3.2.9 启动计算图</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy;  2015 - 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">轩辕</span>
+</div>
+
+<div class="powered-by">
+  <!--由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动-->
+</div>
+
+<div class="theme-info">
+  <!--主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>-->
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+       search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="popoverlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+    'use strict';
+    $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+            // get the contents from search data
+            isfetched = true;
+            $('.popup').detach().appendTo('.header-inner');
+            var datas = $( "entry", xmlResponse ).map(function() {
+                return {
+                    title: $( "title", this ).text(),
+                    content: $("content",this).text(),
+                    url: $( "url" , this).text()
+                };
+            }).get();
+            var $input = document.getElementById(search_id);
+            var $resultContent = document.getElementById(content_id);
+            $input.addEventListener('input', function(){
+                var matchcounts = 0;
+                var str='<ul class=\"search-result-list\">';
+                var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+                $resultContent.innerHTML = "";
+                if (this.value.trim().length > 1) {
+                // perform local searching
+                datas.forEach(function(data) {
+                    var isMatch = true;
+                    var content_index = [];
+                    var data_title = data.title.trim().toLowerCase();
+                    var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                    var data_url = data.url;
+                    var index_title = -1;
+                    var index_content = -1;
+                    var first_occur = -1;
+                    // only match artiles with not empty titles and contents
+                    if(data_title != '' && data_content != '') {
+                        keywords.forEach(function(keyword, i) {
+                            index_title = data_title.indexOf(keyword);
+                            index_content = data_content.indexOf(keyword);
+                            if( index_title < 0 && index_content < 0 ){
+                                isMatch = false;
+                            } else {
+                                if (index_content < 0) {
+                                    index_content = 0;
+                                }
+                                if (i == 0) {
+                                    first_occur = index_content;
+                                }
+                            }
+                        });
+                    }
+                    // show search results
+                    if (isMatch) {
+                        matchcounts += 1;
+                        str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                        var content = data.content.trim().replace(/<[^>]+>/g,"");
+                        if (first_occur >= 0) {
+                            // cut out 100 characters
+                            var start = first_occur - 20;
+                            var end = first_occur + 80;
+                            if(start < 0){
+                                start = 0;
+                            }
+                            if(start == 0){
+                                end = 50;
+                            }
+                            if(end > content.length){
+                                end = content.length;
+                            }
+                            var match_content = content.substring(start, end);
+                            // highlight all keywords
+                            keywords.forEach(function(keyword){
+                                var regS = new RegExp(keyword, "gi");
+                                match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                            });
+
+                            str += "<p class=\"search-result\">" + match_content +"...</p>"
+                        }
+                        str += "</li>";
+                    }
+                })};
+                str += "</ul>";
+                if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+                if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+                $resultContent.innerHTML = str;
+            });
+            proceedsearch();
+        }
+    });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".popoverlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("HkzSeXgqv4E0fnYfDSnSPqlh-gzGzoHsz", "aJ6qgC0qEVu8NyCBj9zqC7Sr");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script><!-- hexo-inject:begin --><!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for(i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+<!-- hexo-inject:end -->
+
+
+
+  
+
+</body>
+</html>
