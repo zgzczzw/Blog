@@ -94,4 +94,7 @@ deploy:
   plugins: 
    - hexo-generator-feed
    - hexo-math
-
+admin:
+  username: zgzczzw@163.com
+  password_hash: $2a$10$A7m1ZgZxNkGigFGq5gV.WufVzHizRYs.BudoNxqpYp7xJtO2SJ5ta
+  secret: my super secret phrase
